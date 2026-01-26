@@ -1,26 +1,98 @@
 @import "tailwindcss";
 
+/* ────────────────────────────────────────────── */
+/* Design tokens (CSS variables)                  */
+/* ────────────────────────────────────────────── */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Base colors – dark par défaut */
+  --color-bg: #0b0e14;
+  --color-bg-panel: #111827;
+  --color-bg-subtle: #1f2937;
+
+  --color-fg: #e5e7eb;
+  --color-fg-muted: #9ca3af;
+
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
+
+  --color-danger: #ef4444;
+
+  /* ORBAT colors (toujours définies) */
+  --color-blue-orbat-stroke: #0033a0;
+  --color-blue-orbat-bg: #b3d9ff;
+  --color-black-orbat-contour-light: #1f2937;
+  --color-black-orbat-contour-mili: #111827;
+
+  /* Fonts (fallbacks uniquement)
+     → next/font override --font-sans sur <body> */
+  --font-sans: system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+/* Light mode (prêt si un jour activé) */
+@media (prefers-color-scheme: light) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-bg: #ffffff;
+    --color-bg-panel: #f3f4f6;
+    --color-bg-subtle: #e5e7eb;
+
+    --color-fg: #171717;
+    --color-fg-muted: #4b5563;
   }
 }
 
+/* ────────────────────────────────────────────── */
+/* Base styles                                    */
+/* ────────────────────────────────────────────── */
+
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  height: 100%;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+}
+
+/* Global box model */
+* {
+  box-sizing: border-box;
+}
+
+/* Dialog backdrop */
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+/* ────────────────────────────────────────────── */
+/* ORBAT utilities                                */
+/* ────────────────────────────────────────────── */
+
+.orbat-label {
+  font-size: 1.875rem;
+  line-height: 1.1;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  /* color: var(--color-blue-orbat-stroke); */
+}
+
+.orbat-node {
+  transition: box-shadow 120ms ease, transform 120ms ease;
+}
+
+.orbat-node--hover {
+  box-shadow:
+    0 8px 18px -8px rgba(0, 0, 0, 0.18);
+}
+
+.orbat-node--active {
+  box-shadow:
+    0 14px 30px -10px rgba(0, 0, 0, 0.35),
+    0 6px 12px -8px rgba(0, 0, 0, 0.25);
 }
