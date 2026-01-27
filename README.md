@@ -1,36 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ORBAT Creator
 
-## Getting Started
+ORBAT Creator is a web app to build, edit, and export military-style ORBAT (Order of Battle) diagrams — fast, clean, and reusable.
 
-First, run the development server:
+## Why ORBAT Creator?
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Creating clear ORBATs usually means fighting with drawing tools. ORBAT Creator focuses on the essentials:
+- Structured unit hierarchies (leaders, units, sub-units)
+- Consistent layout and readable connectors
+- Quick edits (rename, reorder, change unit type/role)
+- Exportable data you can reuse in other tools
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Key features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Hierarchy editor**: build multi-level structures (parent → child) and reorganize easily
+- **Visual board**: interactive diagram rendering with connectors
+- **Unit types & roles**: standardized unit kinds with labels/icons
+- **Templates**: start from predefined node/edge layouts (e.g., L1U3, L2U6, etc.)
+- **Import / Export**: JSON export for storage/sharing + SVG-ready rendering pipeline *(if enabled in your build)*
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Tech stack
 
-## Learn More
+- Next.js (App Router) + TypeScript
+- Tailwind CSS
+- Client-side SVG rendering for diagrams
 
-To learn more about Next.js, take a look at the following resources:
+## Getting started
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Requirements
+- Node.js 18+ (20+ recommended)
+- pnpm (recommended)

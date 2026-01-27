@@ -155,6 +155,9 @@ export default function EditorShell() {
         };
     });
 
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+
     // refs used by inline export button (not the preview overlay)
     const exportRef = useRef<HTMLDivElement>(null);
 
@@ -222,6 +225,36 @@ export default function EditorShell() {
         [editor.nodes, editor.selectedId]
     );
 
+    const actions = (
+        <>
+            <OrbatInitReset
+                value={editor.initParams}
+                onChange={(v) => setEditor((p) => ({ ...p, initParams: v }))}
+                onInit={handleInitReset}
+            />
+
+            <OrbatImportExport
+                editor={exportState}
+                onImport={(state) =>
+                    setEditor((prev) => ({
+                        ...prev,
+                        ...state,
+                        scale: state.scale ?? prev.scale,
+                        colorPresetId: state.colorPresetId ?? prev.colorPresetId,
+                    }))
+                }
+            />
+
+            <OrbatColorPresetSelect
+                value={editor.colorPresetId}
+                onChange={(id) => setEditor((p) => ({ ...p, colorPresetId: id }))}
+                label="Color preset"
+            />
+
+            <OrbatExportPngButton targetRef={exportRef} />
+        </>
+    );
+
     function handleInitReset(params: InitParams) {
         setEditor((prev) => {
             const next = buildInitialOrbat(params);
@@ -236,6 +269,7 @@ export default function EditorShell() {
             };
         });
     }
+
 
     return (
         <div className="h-full min-h-0 bg-[var(--color-bg)] text-[var(--color-fg)]">
@@ -257,7 +291,7 @@ export default function EditorShell() {
                     <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm">
                         <div className="flex items-center justify-between gap-2">
                             <div>
-                                <div className="font-semibold">Selected</div>
+                                <div className="font-semibold">Selected element</div>
                                 <div className="opacity-80">
                                     {selectedNode
                                         ? `${selectedNode.displayId ?? selectedNode.id} (${selectedNode.level})`
@@ -280,10 +314,10 @@ export default function EditorShell() {
                             </button>
                         </div>
 
-                        <div className="mt-2 text-xs opacity-70">
+                        {/* <div className="mt-2 text-xs opacity-70">
                             Unit rail direction (stored):{" "}
                             <span className="font-semibold">{editor.unitRailDirection}</span>
-                        </div>
+                        </div> */}
 
                         {isPreview ? (
                             <div className="mt-2 text-xs opacity-70">
@@ -320,38 +354,56 @@ export default function EditorShell() {
                     />
                 </div>
 
+
                 {/* droite */}
-                <div className="flex min-h-0 flex-col overflow-hidden rounded-xl">
-                    <div className="mt-3 flex flex-wrap items-start gap-1 px-3">
-                        <OrbatInitReset
-                            value={editor.initParams}
-                            onChange={(v) => setEditor((p) => ({ ...p, initParams: v }))}
-                            onInit={handleInitReset}
-                        />
-
-                        <OrbatImportExport
-                            editor={exportState}
-                            onImport={(state) =>
-                                setEditor((prev) => ({
-                                    ...prev,
-                                    ...state,
-                                    scale: state.scale ?? prev.scale,
-                                    colorPresetId: state.colorPresetId ?? prev.colorPresetId,
-                                }))
-                            }
-                        />
-
-                        <OrbatColorPresetSelect
-                            value={editor.colorPresetId}
-                            onChange={(id) => setEditor((p) => ({ ...p, colorPresetId: id }))}
-                            label="Color preset"
-                        />
-
-                        {/* Inline export of the inline board (still useful) */}
-                        <OrbatExportPngButton targetRef={exportRef} />
+                <div className="flex min-h-0 flex-col overflow-hidden rounded-xl lg:pt-3">
+                    {/* Mobile trigger (only mobile) */}
+                    <div className="relative lg:hidden">
+                        <button
+                            type="button"
+                            onClick={() => setMobileMenuOpen(true)}
+                            className="z-10 absolute h-9 top-2 right-5 rounded-md border border-black/20 bg-white px-3 text-sm font-semibold hover:border-black/50 cursor-pointer"
+                        >
+                            Actions
+                        </button>
+                        {/* <div className="h-12" /> */}
                     </div>
 
-                    <div className="mt-3 min-h-0 flex-1 px-3 pb-3">
+                    {/* Desktop actions (only lg+) */}
+                    <div className="hidden lg:flex flex-wrap items-start gap-1 px-3 lg:max-h-none">
+                        {actions}
+                    </div>
+
+                    {/* Mobile drawer */}
+                    {mobileMenuOpen && (
+                        <div className="fixed inset-0 z-50 lg:hidden">
+                            <button
+                                type="button"
+                                aria-label="Close"
+                                onClick={() => setMobileMenuOpen(false)}
+                                className="absolute inset-0 bg-black/40"
+                            />
+
+                            <div className="absolute right-0 top-0 h-full w-[85vw] max-w-sm bg-white shadow-xl">
+                                <div className="flex items-center justify-between border-b px-4 py-3">
+                                    <div className="text-sm font-semibold">Actions</div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="h-9 rounded-md border border-black/20 bg-white px-3 text-sm"
+                                    >
+                                        Fermer
+                                    </button>
+                                </div>
+
+                                <div className="flex max-h-full flex-col gap-2 overflow-auto p-3">
+                                    {actions}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="min-h-0 flex-1 p-1 lg:p-3">
                         <OrbatBoard
                             contentRef={exportRef}
                             // keep the inline editor as editor (not exportMode)
@@ -387,15 +439,15 @@ export default function EditorShell() {
                                 step={0.05}
                                 value={editor.scale}
                                 onChange={(e) => setEditor((p) => ({ ...p, scale: Number(e.target.value) }))}
-                                className="mt-2 w-full"
+                                className="w-full"
                             />
-                            <div className="mt-1 text-xs opacity-70">
-                                Scale: {Math.round(editor.scale * 100)}%
-                            </div>
+                            <div className="hidden md:block text-xs opacity-70">Scale: {Math.round(editor.scale * 100)}%</div>
                         </div>
                     </div>
+
                 </div>
+
             </div>
-        </div>
+        </div >
     );
 }
