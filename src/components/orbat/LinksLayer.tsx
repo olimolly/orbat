@@ -20,8 +20,8 @@ function port(slot: Slot, side: PortSide): Pt {
             return { x: Math.round(slot.x + slot.w), y: Math.round(slot.y + slot.h / 2) };
         case "bottomLeft":
             return {
-                x: slot.x + UNIT_BOTTOMLEFT_INSET,
-                y: slot.y + slot.h,
+                x: Math.round(slot.x + UNIT_BOTTOMLEFT_INSET),
+                y: Math.round(slot.y + slot.h),
             };
     }
 }
@@ -44,7 +44,6 @@ function isOrthogonal(points: Pt[], eps = 0.75): boolean {
     return true;
 }
 
-
 export default function LinksLayer({
     slots,
     edges,
@@ -60,8 +59,19 @@ export default function LinksLayer({
 }) {
     const slotById = new Map(slots.map((s) => [s.id, s]));
 
+    const maxRight = Math.max(0, ...slots.map((s) => s.x + s.w));
+    const maxBottom = Math.max(0, ...slots.map((s) => s.y + s.h));
+
+    // square caps + arrondis => un peu plus que *2
+    const pad = Math.ceil(strokeWidth * 4);
+
     return (
-        <svg className="absolute inset-0 h-full w-full pointer-events-none">
+        <svg
+            className="absolute left-0 top-0 pointer-events-none overflow-visible"
+            width={maxRight + pad}
+            height={maxBottom + pad}
+            style={{ width: maxRight + pad, height: maxBottom + pad }}
+        >
             {edges.map((e) => {
                 const aSlot = slotById.get(e.from.slotId);
                 const bSlot = slotById.get(e.to.slotId);
@@ -71,7 +81,11 @@ export default function LinksLayer({
                 const b = port(bSlot, e.to.side);
                 const via: ViaPoint[] = e.via ?? [];
 
-                const points: Pt[] = [a, ...via.map(({ x, y }) => ({ x, y })), b];
+                const points: Pt[] = [
+                    a,
+                    ...via.map(({ x, y }) => ({ x: Math.round(x), y: Math.round(y) })),
+                    b,
+                ];
 
                 if (!isOrthogonal(points)) return null;
 
@@ -93,8 +107,8 @@ export default function LinksLayer({
                             .map((p, i) => (
                                 <rect
                                     key={i}
-                                    x={p.x - junctionSize / 2}
-                                    y={p.y - junctionSize / 2}
+                                    x={Math.round(p.x - junctionSize / 2)}
+                                    y={Math.round(p.y - junctionSize / 2)}
                                     width={junctionSize}
                                     height={junctionSize}
                                     fill={stroke}
