@@ -612,7 +612,11 @@ export default function OrbatBoard({
                                 {isKindOpen ? (
                                     <div
                                         data-kind-popover
-                                        className="absolute right-2 top-2 z-50 w-56 rounded-xl border border-black/20 bg-white p-2 shadow-sm"
+                                        className={[
+                                            "absolute right-2 top-2 z-50 w-56 rounded-xl border border-black/20 p-2 shadow-sm",
+                                            "bg-popover text-fg border-border",
+                                            "ring-1 ring-black/5 dark:ring-white/10",
+                                        ].join(" ")}
                                         onPointerDown={(e) => e.stopPropagation()}
                                         onMouseDown={(e) => e.stopPropagation()}
                                         onClick={(e) => e.stopPropagation()}
@@ -629,7 +633,8 @@ export default function OrbatBoard({
                                         </div>
 
                                         <select
-                                            className="h-9 w-full rounded-md border border-black/20 bg-white px-2 text-sm"
+                                            className="ui-select h-9 w-full rounded-md border bg-control px-2 text-sm text-control-fg border-control-border
+                                                focus:outline-none focus:ring-2 focus:ring-accent/30"
                                             value={nodesById.get(node.id)?.kind ?? "unitBlufor"}
                                             onChange={(e) => {
                                                 const next = e.target.value as UnitKind;

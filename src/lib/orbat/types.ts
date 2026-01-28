@@ -31,7 +31,7 @@ export const UNIT_KIND_LABEL: Record<UnitKind, string> = {
     hQ: "HQ",
     infantry: "Infantry",
     maintenance: "Maintenance",
-    mechanized: "Armored",
+    mechanized: "Armoured",
     mechInfantry: "Mechanized Infantry",
     mechRecon: "Mechanized Recon",
     medical: "Medical",

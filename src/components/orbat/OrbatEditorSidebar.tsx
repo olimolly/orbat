@@ -524,7 +524,7 @@ export default function OrbatEditorSidebar({
                 onReorderChildren={canEdit ? reorderChildren : undefined}
             />
 
-            {/* Inspector (Kind) */}
+            {/* Inspector Selector (Kind) */}
             <div className="rounded-xl border border-border bg-surface-1 p-2 px-3">
                 <div className="flex items-baseline justify-between">
                     <div className="text-sm font-semibold text-fg">Selector</div>
@@ -534,7 +534,8 @@ export default function OrbatEditorSidebar({
                 <label className="mt-2 grid gap-1">
                     <select
                         title="Click a node in the tree, then change its kind here."
-                        className="h-9 rounded-md border border-border bg-bg px-2 text-sm text-fg disabled:opacity-50"
+                        className="ui-select h-9 rounded-md border bg-control px-2 text-sm text-control-fg border-control-border
+                            focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50"
                         disabled={!selectedNode || !canEdit}
                         value={selectedNode?.kind ?? "unitBlufor"}
                         onChange={(e) => setSelectedKind(e.target.value as UnitKind)}
@@ -545,6 +546,8 @@ export default function OrbatEditorSidebar({
                             </option>
                         ))}
                     </select>
+
+
                 </label>
             </div>
 

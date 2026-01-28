@@ -123,8 +123,6 @@ const labelInputClass =
 
 const subtleLink = "text-xs underline text-fg-muted hover:text-fg";
 
-const ROOT_PARENT_ID = "__ROOT__" as NodeId;
-
 export default function TreeView({
     nodes,
     parentById,
@@ -142,14 +140,15 @@ export default function TreeView({
         [nodes, parentById]
     );
 
-    //  roots = uniquement les LEAD sans parent
     const roots = React.useMemo(() => {
-        const raw = nodes
-            .filter((n) => n.level === "LEAD" && parentById[n.id] == null)
-            .map((n) => n.id);
+        const r = nodes.filter((n) => parentById[n.id] == null).map((n) => n.id);
 
-        //  ordre stable basé sur childrenOrder.__ROOT__
-        return stableOrder(ROOT_PARENT_ID, raw, childrenOrder);
+        const ordered = childrenOrder?.__ROOT__;
+        if (!ordered?.length) return r;
+
+        const set = new Set(ordered);
+        const tail = r.filter((id) => !set.has(id));
+        return [...ordered.filter((id) => r.includes(id)), ...tail];
     }, [nodes, parentById, childrenOrder]);
 
     const selectedUnitId = React.useMemo(
@@ -385,13 +384,9 @@ export default function TreeView({
         const isEditing = editingId === id;
 
         const canDnD = Boolean(onReorderChildren) && parentId != null && !isEditing;
-
-        //  siblings: parent normal => childrenMap; parent ROOT => roots (déjà ordonné)
         const siblings =
             parentId != null
-                ? parentId === ROOT_PARENT_ID
-                    ? roots
-                    : stableOrder(parentId, childrenMap.get(parentId) ?? [], childrenOrder)
+                ? stableOrder(parentId, childrenMap.get(parentId) ?? [], childrenOrder)
                 : [];
 
         const showBefore = dropHint?.id === id && dropHint.pos === "before";
@@ -524,11 +519,7 @@ export default function TreeView({
     return (
         <div className="rounded-xl border border-border bg-surface-1 px-3 py-2">
             <div className="mb-2 text-sm font-semibold text-fg">Structure</div>
-
-            {/*  roots : parentId="__ROOT__" pour activer le DnD */}
-            <ul className="m-0 list-none p-0">
-                {roots.map((id) => renderNode(id, ROOT_PARENT_ID))}
-            </ul>
+            <ul className="m-0 list-none p-0">{roots.map((id) => renderNode(id, null))}</ul>
         </div>
     );
 }

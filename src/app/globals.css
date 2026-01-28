@@ -46,6 +46,8 @@
   --app-control-fg: var(--app-fg);
   --app-control-border: rgba(0, 0, 0, 0.14);
 
+  --app-popover: #ffffff;
+
   /* Fonts */
   --app-font-sans: var(--font-sans);
   --app-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
@@ -82,6 +84,9 @@ html.dark {
   --app-control-pressed: rgba(255, 255, 255, 0.14);
   --app-control-fg: var(--app-fg);
   --app-control-border: rgba(255, 255, 255, 0.14);
+
+  --app-popover: #1b2330;
+
 }
 
 /* ────────────────────────────────────────────── */
@@ -119,6 +124,8 @@ html.dark {
   --color-orbat-blue-bg: var(--color-blue-orbat-bg);
   --color-orbat-contour-light: var(--color-black-orbat-contour-light);
   --color-orbat-contour-mili: var(--color-black-orbat-contour-mili);
+
+  --color-popover: var(--app-popover);
 }
 
 /* ────────────────────────────────────────────── */
@@ -179,4 +186,35 @@ html.dark .orbat-node--active {
   box-shadow:
     0 14px 30px -10px rgba(0, 0, 0, 0.75),
     0 6px 12px -8px rgba(0, 0, 0, 0.55);
+}
+
+
+/* select */
+/* Native <select> popup theming (best-effort, varies by browser/OS) */
+select.ui-select {
+  background: var(--app-control);
+  color: var(--app-control-fg);
+  border-color: var(--app-control-border);
+}
+
+/* Important: apply color-scheme on the element itself (not only html) */
+html.dark select.ui-select {
+  color-scheme: dark;
+}
+
+:root select.ui-select {
+  color-scheme: light;
+}
+
+/* Try to style the dropdown list */
+select.ui-select option,
+select.ui-select optgroup {
+  background-color: var(--app-bg);
+  color: var(--app-fg);
+}
+
+html.dark select.ui-select option,
+html.dark select.ui-select optgroup {
+  background-color: var(--app-bg);
+  color: var(--app-fg);
 }
