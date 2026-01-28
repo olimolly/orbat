@@ -5,13 +5,16 @@
 /* ────────────────────────────────────────────── */
 
 :root {
-  /* Base colors – dark par défaut */
-  --color-bg: #0b0e14;
-  --color-bg-panel: #111827;
-  --color-bg-subtle: #1f2937;
+  /* Aide le navigateur pour les contrôles natifs */
+  color-scheme: light;
 
-  --color-fg: #e5e7eb;
-  --color-fg-muted: #9ca3af;
+  /* Base colors – LIGHT par défaut */
+  --color-bg: #ffffff;
+  --color-bg-panel: #f3f4f6;
+  --color-bg-subtle: #e5e7eb;
+
+  --color-fg: #171717;
+  --color-fg-muted: #4b5563;
 
   --color-accent: #3b82f6;
   --color-accent-hover: #2563eb;
@@ -24,23 +27,25 @@
   --color-black-orbat-contour-light: #1f2937;
   --color-black-orbat-contour-mili: #111827;
 
-  /* Fonts (fallbacks uniquement)
-     → next/font override --font-sans sur <body> */
+  /* Fonts (fallbacks) */
   --font-sans: system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco,
     Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
-/* Light mode (prêt si un jour activé) */
-@media (prefers-color-scheme: light) {
-  :root {
-    --color-bg: #ffffff;
-    --color-bg-panel: #f3f4f6;
-    --color-bg-subtle: #e5e7eb;
+/* DARK via classe (piloté par next-themes) */
+.dark {
+  color-scheme: dark;
 
-    --color-fg: #171717;
-    --color-fg-muted: #4b5563;
-  }
+  --color-bg: #0b0e14;
+  --color-bg-panel: #111827;
+  --color-bg-subtle: #1f2937;
+
+  --color-fg: #e5e7eb;
+  --color-fg-muted: #9ca3af;
+
+  --color-accent: #3b82f6;
+  --color-accent-hover: #2563eb;
 }
 
 /* ────────────────────────────────────────────── */
@@ -59,7 +64,6 @@ body {
   line-height: 1.5;
 }
 
-/* Global box model */
 * {
   box-sizing: border-box;
 }
@@ -79,7 +83,6 @@ dialog::backdrop {
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  /* color: var(--color-blue-orbat-stroke); */
 }
 
 .orbat-node {
@@ -87,8 +90,7 @@ dialog::backdrop {
 }
 
 .orbat-node--hover {
-  box-shadow:
-    0 8px 18px -8px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.18);
 }
 
 .orbat-node--active {

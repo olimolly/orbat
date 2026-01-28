@@ -272,7 +272,7 @@ export default function EditorShell() {
 
 
     return (
-        <div className="h-full min-h-0 bg-[var(--color-bg)] text-[var(--color-fg)]">
+        <div className="h-full min-h-0 bg-[var(--color-bg)] text-[var(--color-fg)]    ">
             {/* Overlay should be mounted once, at root */}
             <OrbatPreviewOverlay
                 open={editor.mode === "preview"}
