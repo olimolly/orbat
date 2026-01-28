@@ -47,7 +47,7 @@
   --app-control-border: rgba(0, 0, 0, 0.14);
 
   /* Fonts */
-  --app-font-sans: system-ui, sans-serif;
+  --app-font-sans: var(--font-sans);
   --app-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
 }
@@ -114,10 +114,6 @@ html.dark {
   --color-bg-panel: var(--app-surface-1);
   --color-bg-subtle: var(--app-surface-2);
 
-  /* Fonts (map to font-sans / font-mono utilities) */
-  --font-sans: var(--app-font-sans);
-  --font-mono: var(--app-font-mono);
-
   /* ORBAT */
   --color-orbat-blue-stroke: var(--color-blue-orbat-stroke);
   --color-orbat-blue-bg: var(--color-blue-orbat-bg);
@@ -137,7 +133,7 @@ body {
 body {
   background-color: var(--app-bg);
   color: var(--app-fg);
-  font-family: var(--app-font-sans);
+  font-family: var(--font-sans);
   line-height: 1.5;
 }
 
