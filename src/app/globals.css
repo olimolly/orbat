@@ -1,55 +1,132 @@
 @import "tailwindcss";
 
 /* ────────────────────────────────────────────── */
-/* Design tokens (CSS variables)                  */
+/* Runtime variables (light/dark)                  */
 /* ────────────────────────────────────────────── */
 
 :root {
-  /* Aide le navigateur pour les contrôles natifs */
   color-scheme: light;
 
-  /* Base colors – LIGHT par défaut */
-  --color-bg: #ffffff;
-  --color-bg-panel: #f3f4f6;
-  --color-bg-subtle: #e5e7eb;
-
-  --color-fg: #171717;
-  --color-fg-muted: #4b5563;
-
-  --color-accent: #3b82f6;
-  --color-accent-hover: #2563eb;
-
-  --color-danger: #ef4444;
-
-  /* ORBAT colors (toujours définies) */
+  /* ORBAT (toujours dispo) */
   --color-blue-orbat-stroke: #0033a0;
   --color-blue-orbat-bg: #b3d9ff;
   --color-black-orbat-contour-light: #1f2937;
   --color-black-orbat-contour-mili: #111827;
 
-  /* Fonts (fallbacks) */
-  --font-sans: system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco,
-    Consolas, "Liberation Mono", "Courier New", monospace;
+  /* Backdrop */
+  --app-backdrop: rgba(0, 0, 0, 0.35);
+
+  /* Base */
+  --app-bg: #ffffff;
+
+  /* Surfaces */
+  --app-surface-1: #f6f7f9;
+  /* cards */
+  --app-surface-2: #eef0f3;
+  /* panels */
+  --app-surface-3: #e6e9ee;
+  /* hover/selected */
+
+  /* Text */
+  --app-fg: #171717;
+  --app-fg-muted: #4b5563;
+
+  /* Borders */
+  --app-border: rgba(0, 0, 0, 0.08);
+
+  /* Accents */
+  --app-accent: #3b82f6;
+  --app-accent-hover: #2563eb;
+  --app-danger: #d03030;
+
+  /* Controls (LIGHT = rendu “blanc net”) */
+  --app-control: #ffffff;
+  --app-control-hover: #ffffff;
+  --app-control-pressed: #ffffff;
+  --app-control-fg: var(--app-fg);
+  --app-control-border: rgba(0, 0, 0, 0.14);
+
+  /* Fonts */
+  --app-font-sans: system-ui, sans-serif;
+  --app-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
 }
 
-/* DARK via classe (piloté par next-themes) */
-.dark {
+html.dark {
   color-scheme: dark;
 
-  --color-bg: #0b0e14;
-  --color-bg-panel: #111827;
-  --color-bg-subtle: #1f2937;
+  --app-backdrop: rgba(0, 0, 0, 0.55);
 
-  --color-fg: #e5e7eb;
-  --color-fg-muted: #9ca3af;
+  /* Base */
+  --app-bg: #141821;
 
-  --color-accent: #3b82f6;
-  --color-accent-hover: #2563eb;
+  /* Surfaces */
+  --app-surface-1: #191f2a;
+  --app-surface-2: #1f2733;
+  --app-surface-3: #242e3d;
+
+  /* Text */
+  --app-fg: #e8edf5;
+  --app-fg-muted: #aab4c3;
+
+  /* Borders */
+  --app-border: rgba(255, 255, 255, 0.12);
+
+  /* Accents */
+  --app-accent: #3b82f6;
+  --app-accent-hover: #2563eb;
+
+  /* Controls (DARK = “du blanc qui sort” sans être full white) */
+  --app-control: rgba(255, 255, 255, 0.08);
+  --app-control-hover: rgba(255, 255, 255, 0.12);
+  --app-control-pressed: rgba(255, 255, 255, 0.14);
+  --app-control-fg: var(--app-fg);
+  --app-control-border: rgba(255, 255, 255, 0.14);
 }
 
 /* ────────────────────────────────────────────── */
-/* Base styles                                    */
+/* Tailwind theme tokens (generate utilities)      */
+/* ────────────────────────────────────────────── */
+
+@theme {
+  /* Core */
+  --color-bg: var(--app-bg);
+  --color-surface-1: var(--app-surface-1);
+  --color-surface-2: var(--app-surface-2);
+  --color-surface-3: var(--app-surface-3);
+
+  --color-fg: var(--app-fg);
+  --color-fg-muted: var(--app-fg-muted);
+  --color-border: var(--app-border);
+
+  --color-accent: var(--app-accent);
+  --color-accent-hover: var(--app-accent-hover);
+  --color-danger: var(--app-danger);
+
+  /* Controls */
+  --color-control: var(--app-control);
+  --color-control-hover: var(--app-control-hover);
+  --color-control-pressed: var(--app-control-pressed);
+  --color-control-fg: var(--app-control-fg);
+  --color-control-border: var(--app-control-border);
+
+  /* Compat */
+  --color-bg-panel: var(--app-surface-1);
+  --color-bg-subtle: var(--app-surface-2);
+
+  /* Fonts (map to font-sans / font-mono utilities) */
+  --font-sans: var(--app-font-sans);
+  --font-mono: var(--app-font-mono);
+
+  /* ORBAT */
+  --color-orbat-blue-stroke: var(--color-blue-orbat-stroke);
+  --color-orbat-blue-bg: var(--color-blue-orbat-bg);
+  --color-orbat-contour-light: var(--color-black-orbat-contour-light);
+  --color-orbat-contour-mili: var(--color-black-orbat-contour-mili);
+}
+
+/* ────────────────────────────────────────────── */
+/* Base styles                                     */
 /* ────────────────────────────────────────────── */
 
 html,
@@ -58,9 +135,9 @@ body {
 }
 
 body {
-  background-color: var(--color-bg);
-  color: var(--color-fg);
-  font-family: var(--font-sans);
+  background-color: var(--app-bg);
+  color: var(--app-fg);
+  font-family: var(--app-font-sans);
   line-height: 1.5;
 }
 
@@ -68,13 +145,12 @@ body {
   box-sizing: border-box;
 }
 
-/* Dialog backdrop */
 dialog::backdrop {
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--app-backdrop);
 }
 
 /* ────────────────────────────────────────────── */
-/* ORBAT utilities                                */
+/* ORBAT utilities                                 */
 /* ────────────────────────────────────────────── */
 
 .orbat-label {
@@ -93,8 +169,18 @@ dialog::backdrop {
   box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.18);
 }
 
+html.dark .orbat-node--hover {
+  box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.55);
+}
+
 .orbat-node--active {
   box-shadow:
     0 14px 30px -10px rgba(0, 0, 0, 0.35),
     0 6px 12px -8px rgba(0, 0, 0, 0.25);
+}
+
+html.dark .orbat-node--active {
+  box-shadow:
+    0 14px 30px -10px rgba(0, 0, 0, 0.75),
+    0 6px 12px -8px rgba(0, 0, 0, 0.55);
 }

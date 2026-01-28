@@ -1,3 +1,4 @@
+// src/components/orbat/OrbatExportPngButton.tsx
 "use client";
 
 import * as React from "react";
@@ -16,6 +17,21 @@ function safeMsg(e: unknown) {
     return String(e);
 }
 
+function isFirefox() {
+    if (typeof navigator === "undefined") return false;
+    return /firefox/i.test(navigator.userAgent);
+}
+
+const controlBtn =
+    "h-9 rounded-md border px-3 text-sm font-semibold transition-colors cursor-pointer " +
+    "bg-control text-control-fg border-control-border " +
+    "hover:bg-control-hover active:bg-control-pressed " +
+    "hover:border-black/35 dark:hover:border-white/24";
+
+const controlBtnDisabled =
+    "h-9 rounded-md border px-3 text-sm font-semibold transition-colors " +
+    "border-control-border bg-surface-1 text-fg-muted opacity-60 cursor-not-allowed";
+
 export default function OrbatExportPngButton({
     targetRef,
     fileName = "orbat.png",
@@ -31,16 +47,35 @@ export default function OrbatExportPngButton({
 
         setBusy(true);
         try {
+            // Wait for fonts when supported (helps stability + correct render)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const fontsReady = (document as any).fonts?.ready as Promise<void> | undefined;
+            if (fontsReady) {
+                try {
+                    await fontsReady;
+                } catch {
+                    // ignore
+                }
+            }
+
             // REAL SIZE: ignores transforms (scale)
-            const w = Math.max(1, Math.round(el.scrollWidth));
-            const h = Math.max(1, Math.round(el.scrollHeight));
+            const w = Math.max(1, Math.ceil(el.scrollWidth || el.getBoundingClientRect().width));
+            const h = Math.max(1, Math.ceil(el.scrollHeight || el.getBoundingClientRect().height));
 
             const blob = await toBlob(el, {
                 cacheBust: true,
                 pixelRatio,
                 width: w,
                 height: h,
+
+                // Keep transparent background
                 style: { background: "transparent" },
+
+                // Firefox workaround: skip font embedding that crashes on some setups
+                ...(isFirefox() ? { fontEmbedCSS: "" } : null),
+
+                // Optional: prefer woff2 when embedding is enabled (non-Firefox)
+                preferredFontFormat: "woff2",
             });
 
             if (!blob) {
@@ -63,21 +98,15 @@ export default function OrbatExportPngButton({
         }
     }
 
+    const disabled = busy || !targetRef.current;
+
     return (
         <div className="flex flex-wrap items-end self-center gap-1">
             <button
                 type="button"
                 onClick={() => void handleDownload()}
-                disabled={busy || !targetRef.current}
-                className={
-                    className ??
-                    [
-                        "h-9 rounded-md border text-sm font-semibold p-1.5 m-1.5",
-                        busy || !targetRef.current
-                            ? "border-black/10 bg-black/5 opacity-60 cursor-not-allowed"
-                            : "border-black/20 bg-white hover:border-black/50",
-                    ].join(" ")
-                }
+                disabled={disabled}
+                className={className ?? (disabled ? controlBtnDisabled : controlBtn)}
                 title="Export the board as a PNG (real size), transparent background"
             >
                 {busy ? "Rendering…" : label}

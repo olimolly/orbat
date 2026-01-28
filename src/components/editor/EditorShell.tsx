@@ -272,7 +272,7 @@ export default function EditorShell() {
 
 
     return (
-        <div className="h-full min-h-0 bg-[var(--color-bg)] text-[var(--color-fg)]    ">
+        <div className="h-full min-h-0 bg-bg text-fg">
             {/* Overlay should be mounted once, at root */}
             <OrbatPreviewOverlay
                 open={editor.mode === "preview"}
@@ -287,12 +287,12 @@ export default function EditorShell() {
 
             <div className="grid h-full min-h-0 lg:grid-cols-[360px_1fr]">
                 {/* gauche */}
-                <div className="min-w-0 min-h-0 space-y-3 overflow-y-auto overflow-x-hidden border-b-2 border-black p-3 lg:border-b-0">
-                    <div className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm">
+                <div className="min-w-0 min-h-0 space-y-3 overflow-y-auto overflow-x-hidden border-b-2 border-border p-3 lg:border-b-0 lg:border-r">
+                    <div className="rounded-xl border border-border bg-surface-1 px-3 py-2 text-sm">
                         <div className="flex items-center justify-between gap-2">
                             <div>
                                 <div className="font-semibold">Selected element</div>
-                                <div className="opacity-80">
+                                <div className="text-fg-muted">
                                     {selectedNode
                                         ? `${selectedNode.displayId ?? selectedNode.id} (${selectedNode.level})`
                                         : "None"}
@@ -301,7 +301,13 @@ export default function EditorShell() {
 
                             <button
                                 type="button"
-                                className="h-9 rounded-md border border-black/20 bg-white px-3 text-sm font-semibold hover:border-black/50"
+                                className={[
+                                    "h-9 rounded-md border px-3 text-sm font-semibold transition-colors",
+                                    "cursor-pointer",
+                                    "bg-control text-control-fg border-control-border",
+                                    "hover:bg-control-hover active:bg-control-pressed",
+                                    "hover:border-black/35 dark:hover:border-white/24",
+                                ].join(" ")}
                                 onClick={() =>
                                     setEditor((p) => ({
                                         ...p,
@@ -312,15 +318,11 @@ export default function EditorShell() {
                             >
                                 Preview
                             </button>
+
                         </div>
 
-                        {/* <div className="mt-2 text-xs opacity-70">
-                            Unit rail direction (stored):{" "}
-                            <span className="font-semibold">{editor.unitRailDirection}</span>
-                        </div> */}
-
                         {isPreview ? (
-                            <div className="mt-2 text-xs opacity-70">
+                            <div className="mt-2 text-xs text-fg-muted">
                                 Preview mode: overlay opened.
                             </div>
                         ) : null}
@@ -354,19 +356,24 @@ export default function EditorShell() {
                     />
                 </div>
 
-
                 {/* droite */}
-                <div className="flex min-h-0 flex-col overflow-hidden rounded-xl lg:pt-3">
+                <div className="flex min-h-0 flex-col overflow-hidden lg:pt-3">
                     {/* Mobile trigger (only mobile) */}
                     <div className="relative lg:hidden">
                         <button
                             type="button"
                             onClick={() => setMobileMenuOpen(true)}
-                            className="z-10 absolute h-9 top-2 right-5 rounded-md border border-black/20 bg-white px-3 text-sm font-semibold hover:border-black/50 cursor-pointer"
+                            className={[
+                                "absolute right-5 top-2 z-10 h-9 rounded-md border px-3 text-sm font-semibold transition-colors",
+                                "cursor-pointer",
+                                "bg-control text-control-fg border-control-border",
+                                "hover:bg-control-hover active:bg-control-pressed",
+                                "hover:border-black/35 dark:hover:border-white/24",
+                            ].join(" ")}
                         >
                             Actions
                         </button>
-                        {/* <div className="h-12" /> */}
+
                     </div>
 
                     {/* Desktop actions (only lg+) */}
@@ -381,16 +388,16 @@ export default function EditorShell() {
                                 type="button"
                                 aria-label="Close"
                                 onClick={() => setMobileMenuOpen(false)}
-                                className="absolute inset-0 bg-black/40"
+                                className="absolute inset-0 bg-black/40 dark:bg-black/60"
                             />
 
-                            <div className="absolute right-0 top-0 h-full w-[85vw] max-w-sm bg-white shadow-xl">
-                                <div className="flex items-center justify-between border-b px-4 py-3">
-                                    <div className="text-sm font-semibold">Actions</div>
+                            <div className="absolute right-0 top-0 h-full w-[85vw] max-w-sm border-l border-border bg-surface-1 shadow-xl">
+                                <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                                    <div className="text-sm font-semibold text-fg">Actions</div>
                                     <button
                                         type="button"
                                         onClick={() => setMobileMenuOpen(false)}
-                                        className="h-9 rounded-md border border-black/20 bg-white px-3 text-sm"
+                                        className="h-9 rounded-md border border-border bg-surface-2 px-3 text-sm text-fg hover:bg-surface-3"
                                     >
                                         Fermer
                                     </button>
@@ -404,9 +411,9 @@ export default function EditorShell() {
                     )}
 
                     <div className="min-h-0 flex-1 p-1 lg:p-3">
+
                         <OrbatBoard
                             contentRef={exportRef}
-                            // keep the inline editor as editor (not exportMode)
                             exportMode={false}
                             nodes={editor.nodes}
                             parentById={editor.parentById}
@@ -431,7 +438,7 @@ export default function EditorShell() {
                             }
                         />
 
-                        <div className="fixed bottom-7 right-7 flex w-[220px] flex-col rounded-xl border border-black/15 bg-white p-3">
+                        <div className="fixed bottom-7 right-7 flex w-[220px] flex-col rounded-xl border border-border bg-surface-1 p-3 shadow-sm">
                             <input
                                 type="range"
                                 min={0.5}
@@ -441,13 +448,14 @@ export default function EditorShell() {
                                 onChange={(e) => setEditor((p) => ({ ...p, scale: Number(e.target.value) }))}
                                 className="w-full"
                             />
-                            <div className="hidden md:block text-xs opacity-70">Scale: {Math.round(editor.scale * 100)}%</div>
+                            <div className="hidden md:block text-xs text-fg-muted">
+                                Scale: {Math.round(editor.scale * 100)}%
+                            </div>
                         </div>
                     </div>
-
                 </div>
-
             </div>
-        </div >
+        </div>
     );
+
 }

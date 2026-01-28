@@ -6,16 +6,15 @@ import * as React from "react";
 export type UnitRailDirection = "horizontal" | "vertical";
 
 export type InitParams = {
-    leadCount: number;       // default 1
-    unitsPerLead: number;    // default 3
-    subsPerUnit: number;     // default 0
+    leadCount: number; // default 1
+    unitsPerLead: number; // default 3
+    subsPerUnit: number; // default 0
     unitRailDirection: UnitRailDirection; // default "horizontal" (pas appliqué)
 };
 
 type Props = {
     value: InitParams;
     onChange: (next: InitParams) => void;
-
     onInit: (params: InitParams) => void;
 };
 
@@ -23,6 +22,18 @@ function clampInt(n: number, min: number, max: number) {
     if (!Number.isFinite(n)) return min;
     return Math.max(min, Math.min(max, Math.trunc(n)));
 }
+
+const controlBase =
+    "rounded-md border px-2 py-1.5 text-sm transition-colors " +
+    "bg-control text-control-fg border-control-border " +
+    "hover:bg-control-hover active:bg-control-pressed " +
+    "hover:border-black/35 dark:hover:border-white/24";
+
+const inputBase =
+    "rounded-md border p-1.5 text-sm transition-colors " +
+    "bg-control text-control-fg border-control-border " +
+    "focus:outline-none focus:ring-2 focus:ring-accent/30 " +
+    "hover:border-black/35 dark:hover:border-white/24";
 
 export default function OrbatInitReset({ value, onChange, onInit }: Props) {
     const [open, setOpen] = React.useState(false);
@@ -32,32 +43,32 @@ export default function OrbatInitReset({ value, onChange, onInit }: Props) {
     }
 
     return (
-        <div className="flex flex-wrap items-end rounded-xl border border-black/15 bg-white gap-1 p-1.5">
+        <div className="flex flex-wrap items-end gap-1 rounded-xl border border-border bg-surface-1 p-1.5 text-fg">
             <div className="flex flex-col gap-1">
-                <span className="text-xs font-semibold opacity-80">CONFIG</span>
-                {/* <div className="text-sm font-semibold">Preset</div> */}
-                {/* <div className="text-xs opacity-70">Structure par défaut (LEAD → UNIT → SUB)</div> */}
+                <span className="text-xs font-semibold text-fg-muted">CONFIG</span>
+
                 <button
                     type="button"
-                    className="rounded-md border border-black/20 bg-white p-1.5 text-sm hover:border-black/50"
+                    className={[controlBase, "min-w-[72px] cursor-pointer"].join(" ")}
                     onClick={() => setOpen((v) => !v)}
-                    style={{ minWidth: "72px" }}
                 >
                     {open ? "Close" : "Preset"}
                 </button>
             </div>
 
-            {/* Collapsible: height collapse + width animation (CSS-only) */}
+            {/* Collapsible */}
             <div
                 className={[
                     "grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none",
-                    open ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0 pointer-events-none",
+                    open
+                        ? "grid-rows-[1fr] opacity-100"
+                        : "grid-rows-[0fr] opacity-0 pointer-events-none",
                 ].join(" ")}
             >
                 <div className="overflow-hidden">
                     <div
                         className={[
-                            "overflow-hidden inline-block align-top",
+                            "inline-block align-top overflow-hidden",
                             "transition-[max-width] duration-200 ease-out motion-reduce:transition-none",
                             open ? "max-w-[900px]" : "max-w-0",
                         ].join(" ")}
@@ -65,48 +76,56 @@ export default function OrbatInitReset({ value, onChange, onInit }: Props) {
                         <div className="flex flex-wrap items-end gap-1">
                             {/* LEAD */}
                             <label className="flex flex-col gap-1 text-sm">
-                                <span className="text-xs font-semibold opacity-80">PLATOON</span>
+                                <span className="text-xs font-semibold text-fg-muted">PLATOON</span>
                                 <input
-                                    className="rounded-md border border-black/20 p-1.5"
+                                    className={inputBase}
                                     type="number"
                                     min={1}
                                     max={6}
                                     value={value.leadCount}
-                                    onChange={(e) => update({ leadCount: clampInt(Number(e.target.value), 1, 6) })}
+                                    onChange={(e) =>
+                                        update({ leadCount: clampInt(Number(e.target.value), 1, 6) })
+                                    }
                                 />
                             </label>
 
                             {/* UNIT / LEAD */}
                             <label className="flex flex-col gap-1 text-sm">
-                                <span className="text-xs font-semibold opacity-80">SQUAD</span>
+                                <span className="text-xs font-semibold text-fg-muted">SQUAD</span>
                                 <input
-                                    className="rounded-md border border-black/20 p-1.5"
+                                    className={inputBase}
                                     type="number"
                                     min={0}
                                     max={12}
                                     value={value.unitsPerLead}
-                                    onChange={(e) => update({ unitsPerLead: clampInt(Number(e.target.value), 0, 12) })}
+                                    onChange={(e) =>
+                                        update({
+                                            unitsPerLead: clampInt(Number(e.target.value), 0, 12),
+                                        })
+                                    }
                                 />
                             </label>
 
                             {/* SUB / UNIT */}
                             <label className="flex flex-col gap-1 text-sm">
-                                <span className="text-xs font-semibold opacity-80">TEAM</span>
+                                <span className="text-xs font-semibold text-fg-muted">TEAM</span>
                                 <input
-                                    className="rounded-md border border-black/20 p-1.5"
+                                    className={inputBase}
                                     type="number"
                                     min={0}
                                     max={12}
                                     value={value.subsPerUnit}
-                                    onChange={(e) => update({ subsPerUnit: clampInt(Number(e.target.value), 0, 12) })}
+                                    onChange={(e) =>
+                                        update({ subsPerUnit: clampInt(Number(e.target.value), 0, 12) })
+                                    }
                                 />
                             </label>
 
                             {/* Rail direction */}
-                            <fieldset className="flex items-center gap-3 rounded-md border border-black/10 p-1.5">
+                            <fieldset className="flex items-center gap-3 rounded-md border border-control-border bg-control px-2 py-1.5">
                                 <legend className="sr-only">Unit rail direction</legend>
 
-                                <label className="flex items-center gap-1 text-sm">
+                                <label className="flex items-center gap-1 text-sm text-control-fg cursor-pointer">
                                     <input
                                         type="radio"
                                         title="Horizontal"
@@ -117,7 +136,7 @@ export default function OrbatInitReset({ value, onChange, onInit }: Props) {
                                     ↔
                                 </label>
 
-                                <label className="flex items-center gap-1 text-sm">
+                                <label className="flex items-center gap-1 text-sm text-fg-muted">
                                     <input
                                         disabled
                                         type="radio"
@@ -134,7 +153,7 @@ export default function OrbatInitReset({ value, onChange, onInit }: Props) {
                             <div className="ml-auto flex items-center gap-2">
                                 <button
                                     type="button"
-                                    className="rounded-md border border-black/20 text-sm hover:border-black/50 p-1.5"
+                                    className={[controlBase, "cursor-pointer"].join(" ")}
                                     onClick={() =>
                                         onChange({
                                             leadCount: 1,
@@ -149,7 +168,10 @@ export default function OrbatInitReset({ value, onChange, onInit }: Props) {
 
                                 <button
                                     type="button"
-                                    className="rounded-md bg-black text-sm font-semibold text-white hover:opacity-90 p-1.5"
+                                    className={[
+                                        "rounded-md px-2 py-1.5 text-sm font-semibold transition-colors cursor-pointer",
+                                        "bg-accent text-white hover:bg-accent-hover active:opacity-90",
+                                    ].join(" ")}
                                     onClick={() => {
                                         onInit(value);
                                         setOpen(false);
@@ -162,8 +184,6 @@ export default function OrbatInitReset({ value, onChange, onInit }: Props) {
                     </div>
                 </div>
             </div>
-
-
         </div>
     );
 }

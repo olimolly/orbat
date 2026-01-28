@@ -383,21 +383,34 @@ export default function OrbatEditorSidebar({
     function btnClass(enabled: boolean) {
         return [
             "inline-flex items-center justify-center rounded-md border px-2 py-1 text-sm font-semibold",
+            "transition-colors cursor-pointer",
             enabled
-                ? "border-black/20 bg-white hover:border-black/50"
-                : "border-black/10 bg-black/5 opacity-50 cursor-not-allowed",
+                ? [
+                    // LIGHT: blanc net + bordure soft
+                    "bg-control text-control-fg border-control-border",
+                    "hover:bg-control-hover hover:border-black/35",
+                    "active:bg-control-pressed",
+                    // DARK: “du blanc qui sort” (voile)
+                    "dark:hover:border-white/24",
+                ].join(" ")
+                : [
+                    "cursor-not-allowed opacity-50",
+                    "bg-surface-1 text-fg-muted border-border",
+                ].join(" "),
         ].join(" ");
     }
+
+
 
     return (
         <div className="flex flex-col gap-3">
             {/* Actions compactes +/- */}
-            <div className="rounded-xl border border-black/15 bg-white py-2">
+            <div className="rounded-xl border border-border bg-surface-1 py-2">
                 <div className="flex flex-row">
                     <div className="flex flex-col flex-auto items-center justify-between gap-1">
-                        <div className="text-sm">
+                        <div className="text-sm text-fg">
                             PLATOON{" "}
-                            <span className="text-xs opacity-60">{targetLeadId ?? "—"}</span>
+                            <span className="text-xs text-fg-muted">{targetLeadId ?? "—"}</span>
                         </div>
                         <div className="flex gap-1">
                             <button
@@ -420,9 +433,9 @@ export default function OrbatEditorSidebar({
                     </div>
 
                     <div className="flex flex-col flex-auto items-center justify-between gap-1">
-                        <div className="text-sm">
+                        <div className="text-sm text-fg">
                             SQUAD{" "}
-                            <span className="text-xs opacity-60">
+                            <span className="text-xs text-fg-muted">
                                 ({targetLeadId ?? "—"} / unit: {targetUnitId ?? "—"})
                             </span>
                         </div>
@@ -447,9 +460,9 @@ export default function OrbatEditorSidebar({
                     </div>
 
                     <div className="flex flex-col flex-auto items-center justify-between gap-1">
-                        <div className="text-sm">
+                        <div className="text-sm text-fg">
                             TEAM{" "}
-                            <span className="text-xs opacity-60">({targetUnitId ?? "—"})</span>
+                            <span className="text-xs text-fg-muted">({targetUnitId ?? "—"})</span>
                         </div>
                         <div className="flex gap-1">
                             <button
@@ -512,16 +525,16 @@ export default function OrbatEditorSidebar({
             />
 
             {/* Inspector (Kind) */}
-            <div className="rounded-xl border border-black/15 bg-white p-2 px-3">
+            <div className="rounded-xl border border-border bg-surface-1 p-2 px-3">
                 <div className="flex items-baseline justify-between">
-                    <div className="text-sm font-semibold">Inspector</div>
-                    <div className="text-xs font-semibold opacity-80">Kind / Type of SVG</div>
+                    <div className="text-sm font-semibold text-fg">Selector</div>
+                    <div className="text-xs font-semibold text-fg-muted">Kind / Type of SVG</div>
                 </div>
 
                 <label className="mt-2 grid gap-1">
                     <select
                         title="Click a node in the tree, then change its kind here."
-                        className="h-9 rounded-md border border-black/15 bg-white px-2 text-sm disabled:opacity-50"
+                        className="h-9 rounded-md border border-border bg-bg px-2 text-sm text-fg disabled:opacity-50"
                         disabled={!selectedNode || !canEdit}
                         value={selectedNode?.kind ?? "unitBlufor"}
                         onChange={(e) => setSelectedKind(e.target.value as UnitKind)}
@@ -538,14 +551,14 @@ export default function OrbatEditorSidebar({
             {/* Toast UNDO */}
             {undo ? (
                 <div className="sticky bottom-3">
-                    <div className="flex items-center justify-between gap-3 rounded-xl border border-black/15 bg-white p-3 shadow-sm">
-                        <div className="text-sm">
-                            {undo.message} <span className="text-xs opacity-60">(Undo available)</span>
+                    <div className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-1 p-3 shadow-sm">
+                        <div className="text-sm text-fg">
+                            {undo.message} <span className="text-xs text-fg-muted">(Undo available)</span>
                         </div>
                         <div className="flex gap-2">
                             <button
                                 type="button"
-                                className="rounded-md border border-black/20 bg-white px-3 py-1.5 text-sm font-semibold hover:border-black/50"
+                                className="rounded-md border border-border bg-surface-2 px-3 py-1.5 text-sm font-semibold text-fg hover:bg-surface-3"
                                 onClick={handleUndo}
                                 disabled={!canEdit}
                             >
@@ -553,7 +566,7 @@ export default function OrbatEditorSidebar({
                             </button>
                             <button
                                 type="button"
-                                className="rounded-md border border-black/10 bg-black/5 px-3 py-1.5 text-sm font-semibold opacity-70 hover:opacity-100"
+                                className="rounded-md border border-border bg-surface-1 px-3 py-1.5 text-sm font-semibold text-fg-muted hover:text-fg"
                                 onClick={() => setUndo(null)}
                                 title="Dismiss"
                             >
@@ -565,4 +578,5 @@ export default function OrbatEditorSidebar({
             ) : null}
         </div>
     );
+
 }

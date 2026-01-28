@@ -94,6 +94,35 @@ function findAncestorUnitId(
     return null;
 }
 
+/**
+ * Styles basés sur tes tokens:
+ * bg-control / bg-control-hover / bg-control-pressed
+ * border-control-border / text-control-fg
+ */
+const rowBase =
+    "w-full rounded-md border px-2 py-1 text-left transition-colors shadow-sm cursor-pointer " +
+    "border-control-border text-control-fg";
+
+const rowIdle = "bg-control hover:bg-control-hover";
+const rowSelected =
+    "bg-control-hover ring-1 ring-accent/30 border-control-border";
+
+const chipClass =
+    "inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border shadow-sm " +
+    "border-control-border bg-control-hover text-[11px] font-semibold text-fg-muted";
+
+const inputClass =
+    "min-w-0 flex-1 rounded border px-1.5 py-0.5 text-sm transition " +
+    "border-control-border bg-control text-control-fg " +
+    "outline-none ring-2 ring-accent/10 focus:ring-accent/30";
+
+const labelInputClass =
+    "w-full rounded-md border px-2 py-1 text-sm transition " +
+    "border-control-border bg-control text-control-fg " +
+    "focus:outline-none focus:ring-2 focus:ring-accent/30";
+
+const subtleLink = "text-xs underline text-fg-muted hover:text-fg";
+
 export default function TreeView({
     nodes,
     parentById,
@@ -122,15 +151,12 @@ export default function TreeView({
         return [...ordered.filter((id) => r.includes(id)), ...tail];
     }, [nodes, parentById, childrenOrder]);
 
-    //  UNIT "cible" : parent UNIT de la sélection (ou l'UNIT si sélection = UNIT)
     const selectedUnitId = React.useMemo(
         () => findAncestorUnitId(selectedId ?? null, nodesById, parentById),
         [selectedId, nodesById, parentById]
     );
 
-    // ───────────────────────────────
-    // Inline edit (double click)
-    // ───────────────────────────────
+    // Inline edit
     const [editingId, setEditingId] = React.useState<NodeId | null>(null);
     const [draft, setDraft] = React.useState<string>("");
 
@@ -160,10 +186,7 @@ export default function TreeView({
         if (editingId && selectedId !== editingId) setEditingId(null);
     }, [selectedId, editingId]);
 
-    // ───────────────────────────────
-    // DnD (intra-parent only)
-    // Drop zone is ROW ONLY (not the whole <li>)
-    // ───────────────────────────────
+    // DnD
     const dragRef = React.useRef<{ parentId: NodeId; draggedId: NodeId } | null>(null);
     const hoverRef = React.useRef<{ parentId: NodeId; dropIndex: number } | null>(null);
 
@@ -212,11 +235,11 @@ export default function TreeView({
         const hasBottom = n.labelBottom != null;
 
         return (
-            <div className="ml-2 mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <div className="ml-2 mt-1 flex flex-wrap items-center justify-around gap-x-3 gap-y-1">
                 {onAddChild && n.level !== "SUB" ? (
                     <button
                         type="button"
-                        className="text-xs underline opacity-80 hover:opacity-100"
+                        className={subtleLink}
                         onClick={() => {
                             const hint = n.level === "LEAD" ? "UNIT" : "SUB";
                             onAddChild(n.id, hint);
@@ -226,36 +249,26 @@ export default function TreeView({
                     </button>
                 ) : null}
 
-                {onDelete ? (
-                    <button
-                        type="button"
-                        className="text-xs underline text-red-600 opacity-90 hover:opacity-100 cursor-pointer"
-                        onClick={() => onDelete(n.id)}
-                    >
-                        Delete
-                    </button>
-                ) : null}
-
                 {onUpdateNode ? (
                     <>
                         {canMain && !hasMain ? (
                             <button
                                 type="button"
-                                className="text-xs underline opacity-80 hover:opacity-100 cursor-pointer"
+                                className={subtleLink}
                                 onClick={() => {
                                     onSelect?.(n.id);
                                     setLabel(n.id, "labelMain", "");
                                 }}
                                 title="Add main label"
                             >
-                                + Main
+                                + Label
                             </button>
                         ) : null}
 
                         {!hasTop ? (
                             <button
                                 type="button"
-                                className="text-xs underline opacity-80 hover:opacity-100 cursor-pointer"
+                                className={subtleLink}
                                 onClick={() => {
                                     onSelect?.(n.id);
                                     setLabel(n.id, "labelTop", "");
@@ -269,7 +282,7 @@ export default function TreeView({
                         {!hasBottom ? (
                             <button
                                 type="button"
-                                className="text-xs underline opacity-80 hover:opacity-100 cursor-pointer"
+                                className={subtleLink}
                                 onClick={() => {
                                     onSelect?.(n.id);
                                     setLabel(n.id, "labelBottom", "");
@@ -280,6 +293,17 @@ export default function TreeView({
                             </button>
                         ) : null}
                     </>
+                ) : null}
+
+                {onDelete ? (
+                    <button
+                        type="button"
+                        className="text-xs underline text-danger/80 hover:text-danger"
+                        onClick={() => onDelete(n.id)}
+                        title="Delete element"
+                    >
+                        Delete
+                    </button>
                 ) : null}
             </div>
         );
@@ -296,12 +320,9 @@ export default function TreeView({
 
         if (rows.length === 0) return null;
 
-        const inputClass =
-            "w-full rounded-md border border-black/20 bg-white px-2 py-1 text-sm " +
-            "focus:border-black/50 focus:outline-none";
-
         const chip =
-            "inline-flex items-center justify-center rounded bg-black/10 px-1.5 py-0.5 text-[10px] font-semibold";
+            "inline-flex items-center justify-center rounded border px-1.5 py-0.5 text-[10px] font-semibold " +
+            "border-control-border bg-control-hover text-fg-muted";
 
         return (
             <div className="ml-2 mt-2 space-y-2">
@@ -312,7 +333,7 @@ export default function TreeView({
                         </span>
 
                         <input
-                            className={inputClass}
+                            className={labelInputClass}
                             value={r.value}
                             placeholder={
                                 r.key === "labelMain"
@@ -333,7 +354,7 @@ export default function TreeView({
 
                         <button
                             type="button"
-                            className="text-xs underline opacity-80 hover:opacity-100"
+                            className={subtleLink}
                             onClick={() => setLabel(n.id, r.key, undefined)}
                             title="Remove label"
                         >
@@ -352,12 +373,11 @@ export default function TreeView({
         const rawChildren = childrenMap.get(id) ?? [];
         const kidsAll = stableOrder(id, rawChildren, childrenOrder);
 
-        //  filtre SUB : on n'affiche les SUB que sous l'UNIT cible
         const kids =
             n.level === "UNIT"
                 ? id === selectedUnitId
-                    ? kidsAll // on montre les SUB de cet UNIT
-                    : kidsAll.filter((cid) => nodesById.get(cid)?.level !== "SUB") // on cache les SUB
+                    ? kidsAll
+                    : kidsAll.filter((cid) => nodesById.get(cid)?.level !== "SUB")
                 : kidsAll;
 
         const isSelected = selectedId === id;
@@ -365,7 +385,9 @@ export default function TreeView({
 
         const canDnD = Boolean(onReorderChildren) && parentId != null && !isEditing;
         const siblings =
-            parentId != null ? stableOrder(parentId, childrenMap.get(parentId) ?? [], childrenOrder) : [];
+            parentId != null
+                ? stableOrder(parentId, childrenMap.get(parentId) ?? [], childrenOrder)
+                : [];
 
         const showBefore = dropHint?.id === id && dropHint.pos === "before";
         const showAfter = dropHint?.id === id && dropHint.pos === "after";
@@ -420,10 +442,10 @@ export default function TreeView({
                     }}
                 >
                     {showBefore ? (
-                        <div className="pointer-events-none absolute left-0 right-0 top-0 h-[2px] rounded bg-black/60" />
+                        <div className="pointer-events-none absolute left-0 right-0 top-0 h-[2px] rounded bg-accent/70" />
                     ) : null}
                     {showAfter ? (
-                        <div className="pointer-events-none absolute left-0 right-0 bottom-0 h-[2px] rounded bg-black/60" />
+                        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-[2px] rounded bg-accent/70" />
                     ) : null}
 
                     <button
@@ -438,24 +460,17 @@ export default function TreeView({
                             startEdit(id);
                         }}
                         className={[
-                            "w-full text-left rounded-md px-2 py-1 cursor-pointer",
-                            "border",
-                            isSelected ? "bg-black text-white border-black" : "bg-white text-black border-black/20",
-                            "hover:border-black/50",
+                            rowBase,
+                            isSelected ? rowSelected : rowIdle,
                         ].join(" ")}
                     >
-                        <span className="inline-flex items-center gap-2 w-full">
-                            <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-black/10 text-[11px] font-semibold shrink-0">
-                                {levelBadge(n.level)}
-                            </span>
+                        <span className="inline-flex w-full items-center gap-2">
+                            <span className={chipClass}>{levelBadge(n.level)}</span>
 
                             {isEditing ? (
                                 <input
                                     autoFocus
-                                    className={[
-                                        "min-w-0 flex-1 rounded bg-white/90 px-1.5 py-0.5 text-sm text-black",
-                                        "outline-none ring-2 ring-black/20 focus:ring-black/40",
-                                    ].join(" ")}
+                                    className={inputClass}
                                     value={draft}
                                     placeholder={n.id}
                                     onChange={(e) => setDraft(e.target.value)}
@@ -476,7 +491,11 @@ export default function TreeView({
                                 <span className="font-medium">{labelOf(n)}</span>
                             )}
 
-                            {!isEditing ? <span className="ml-auto text-xs opacity-70 shrink-0">({n.kind})</span> : null}
+                            {!isEditing ? (
+                                <span className="ml-auto shrink-0 text-xs text-fg-muted">
+                                    ({n.kind})
+                                </span>
+                            ) : null}
                         </span>
                     </button>
                 </div>
@@ -489,7 +508,7 @@ export default function TreeView({
                 ) : null}
 
                 {kids.length > 0 ? (
-                    <ul className="ml-5 mt-1 border-l border-black/20 pl-3">
+                    <ul className="ml-5 mt-1 border-l border-border pl-3">
                         {kids.map((cid) => renderNode(cid, id))}
                     </ul>
                 ) : null}
@@ -498,8 +517,8 @@ export default function TreeView({
     };
 
     return (
-        <div className="rounded-xl border border-black/15 bg-white py-2 px-3">
-            <div className="mb-2 text-sm font-semibold">Structure</div>
+        <div className="rounded-xl border border-border bg-surface-1 px-3 py-2">
+            <div className="mb-2 text-sm font-semibold text-fg">Structure</div>
             <ul className="m-0 list-none p-0">{roots.map((id) => renderNode(id, null))}</ul>
         </div>
     );

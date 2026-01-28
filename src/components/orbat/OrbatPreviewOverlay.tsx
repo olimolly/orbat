@@ -114,33 +114,37 @@ export default function OrbatPreviewOverlay({
 
     return (
         <div className="fixed inset-0 z-[1000]">
-            <div className="absolute inset-0 bg-black/60" onClick={onClose} aria-hidden />
+            <div
+                className="absolute inset-0 bg-black/60 dark:bg-black/70"
+                onClick={onClose}
+                aria-hidden
+            />
 
             <div className="absolute inset-0 p-2 sm:p-3">
-                <div className="relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-black/20 bg-white shadow-xl">
+                <div className="relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border bg-bg shadow-xl">
                     {/* top bar */}
-                    <div className="flex items-center justify-between gap-2 border-b border-black/10 px-3 py-2">
-                        <div className="text-sm font-semibold">Preview</div>
+                    <div className="flex items-center justify-between gap-2 border-b border-border bg-surface-1 px-3 py-2">
+                        <div className="text-sm font-semibold text-fg">Preview</div>
 
                         <div className="flex items-center gap-2">
                             {/* zoom controls */}
                             <div className="flex items-center gap-1">
                                 <button
                                     type="button"
-                                    className="h-9 rounded-md border border-black/20 bg-white px-3 text-sm font-semibold hover:border-black/50"
+                                    className="h-9 rounded-md border border-border bg-surface-2 px-3 text-sm font-semibold text-fg hover:bg-surface-3"
                                     onClick={() => setUserZoom((z) => clamp(z / 1.15, 0.25, 6))}
                                     title="Zoom -"
                                 >
                                     −
                                 </button>
 
-                                <div className="min-w-[68px] text-center text-sm font-semibold">
+                                <div className="min-w-[68px] text-center text-sm font-semibold text-fg">
                                     {Math.round(userZoom * 100)}%
                                 </div>
 
                                 <button
                                     type="button"
-                                    className="h-9 rounded-md border border-black/20 bg-white px-3 text-sm font-semibold hover:border-black/50"
+                                    className="h-9 rounded-md border border-border bg-surface-2 px-3 text-sm font-semibold text-fg hover:bg-surface-3"
                                     onClick={() => setUserZoom((z) => clamp(z * 1.15, 0.25, 6))}
                                     title="Zoom +"
                                 >
@@ -149,7 +153,7 @@ export default function OrbatPreviewOverlay({
 
                                 <button
                                     type="button"
-                                    className="h-9 rounded-md border border-black/20 bg-white px-3 text-sm font-semibold hover:border-black/50"
+                                    className="h-9 rounded-md border border-border bg-surface-2 px-3 text-sm font-semibold text-fg hover:bg-surface-3"
                                     onClick={() => setUserZoom(1)}
                                     title="Reset zoom"
                                 >
@@ -157,11 +161,15 @@ export default function OrbatPreviewOverlay({
                                 </button>
                             </div>
 
-                            <OrbatExportPngButton targetRef={exportRef} fileName="orbat.png" label="Export PNG" />
+                            <OrbatExportPngButton
+                                targetRef={exportRef}
+                                fileName="orbat.png"
+                                label="Export PNG"
+                            />
 
                             <button
                                 type="button"
-                                className="h-9 rounded-md border border-black/20 bg-white px-3 text-sm font-semibold hover:border-black/50"
+                                className="h-9 rounded-md border border-border bg-surface-2 px-3 text-sm font-semibold text-fg hover:bg-surface-3"
                                 onClick={onClose}
                             >
                                 Close
@@ -170,7 +178,7 @@ export default function OrbatPreviewOverlay({
                     </div>
 
                     {/* viewport */}
-                    <div ref={viewportRef} className="relative flex-1 min-h-0 overflow-auto">
+                    <div ref={viewportRef} className="relative flex-1 min-h-0 overflow-auto bg-bg">
                         {/* centre quand ça tient, scroll quand ça dépasse */}
                         <div className="grid min-h-full min-w-full place-items-center p-4 sm:p-6">
                             <div style={{ transform: `scale(${effectiveScale})`, transformOrigin: "top left" }}>
@@ -196,4 +204,5 @@ export default function OrbatPreviewOverlay({
             </div>
         </div>
     );
+
 }

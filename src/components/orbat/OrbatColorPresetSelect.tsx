@@ -62,25 +62,24 @@ export default function OrbatColorPresetSelect({
     >;
 
     return (
-        <div className="flex flex-wrap items-end self-center rounded-xl border border-black/15 bg-white gap-1 p-1.5">
-
-            <div className={cls("grid gap-1 ", className)}>
-                {/* <div className="text-xs font-semibold opacity-80">{label}</div> */}
-                <div className="flex flex-wrap gap-2 justify-self-start w-fit">
+        <div className="flex flex-wrap items-end self-center gap-1 rounded-xl border border-border bg-surface-1 p-1.5">
+            <div className={cls("grid gap-1", className)}>
+                <div className="flex w-fit flex-wrap justify-self-start gap-2">
                     {entries.map(([id, p]) => {
                         const active = id === value;
+
                         return (
                             <button
                                 key={id}
                                 type="button"
                                 onClick={() => onChange(id)}
-                                className={
-                                    cls(
-                                        "flex h-9 w-9 items-center justify-center rounded-md border p-0.5 cursor-pointer transition",
-                                        active
-                                            ? "border-black ring-1 ring-black/40"
-                                            : "hover:ring-1 hover:ring-black/20"
-                                    )}
+                                className={cls(
+                                    "flex h-9 w-9 items-center justify-center rounded-md border p-0.5 transition",
+                                    "cursor-pointer",
+                                    "border-control-border",
+                                    "hover:border-black/35 dark:hover:border-white/24",
+                                    active ? "ring-2 ring-accent/30" : "hover:ring-2 hover:ring-accent/20"
+                                )}
                                 style={{
                                     background: p.colors.bg,
                                     borderWidth: 3,
@@ -92,12 +91,12 @@ export default function OrbatColorPresetSelect({
                             >
                                 <span className="text-sm font-semibold leading-none">♦</span>
                             </button>
+
                         );
                     })}
                 </div>
             </div>
-
         </div>
-
     );
+
 }

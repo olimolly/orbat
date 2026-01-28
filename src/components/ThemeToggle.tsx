@@ -1,43 +1,35 @@
 "use client";
 
-import { useState } from "react";
-
-type Theme = "dark" | "light";
-const KEY = "theme";
-
-function readTheme(): Theme {
-    if (typeof document === "undefined") return "dark";
-    return document.documentElement.dataset.theme === "light" ? "light" : "dark";
-}
+import * as React from "react";
+import { useTheme } from "next-themes";
 
 export default function ThemeToggle() {
-    const [theme, setTheme] = useState<Theme>(() => readTheme());
+    const { theme, setTheme, resolvedTheme } = useTheme();
+    const [mounted, setMounted] = React.useState(false);
 
-    function toggle() {
-        const current = readTheme();
-        const next: Theme = current === "dark" ? "light" : "dark";
+    React.useEffect(() => setMounted(true), []);
 
-        document.documentElement.dataset.theme = next;
+    // Évite mismatch SSR: on n'affiche rien tant que ce n'est pas monté
+    if (!mounted) return null;
 
-        try {
-            localStorage.setItem(KEY, next);
-        } catch { }
-
-        setTheme(next);
-    }
+    const isDark = (theme === "system" ? resolvedTheme : theme) === "dark";
 
     return (
         <button
             type="button"
-            onClick={toggle}
-            className="h-9 rounded-md border px-3 text-sm font-semibold
-                 border-[var(--color-border)] bg-[var(--color-bg-panel)]
-                 text-[var(--color-fg)]
-                 hover:border-[var(--color-border-strong)] hover:bg-[var(--color-bg-subtle)]"
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+            className={[
+                "rounded-md border px-2 py-1 text-xs font-semibold transition-colors",
+                "cursor-pointer",
+                "bg-control text-control-fg border-control-border",
+                "hover:bg-control-hover active:bg-control-pressed",
+                "hover:border-black/35 dark:hover:border-white/24",
+            ].join(" ")}
             aria-label="Toggle theme"
-            title={theme === "dark" ? "Switch to light" : "Switch to dark"}
+            title={`Theme: ${theme ?? "unknown"}`}
         >
-            {theme === "dark" ? "🌙" : "☀️"}
+            {isDark ? "Light" : "Dark"}
         </button>
+
     );
 }
