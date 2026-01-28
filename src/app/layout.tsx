@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {/* NAVBAR GLOBALE */}
         <header className="border-b border-bg-subtle/60">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-            <Link href="/orbats" className="font-semibold tracking-tight">
+            <Link href="/" className="font-semibold tracking-tight">
               Orbat Creator
             </Link>
             <nav className="flex items-center gap-3 text-sm text-fg-muted">
