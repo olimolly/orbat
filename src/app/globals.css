@@ -17,10 +17,10 @@
   --app-backdrop: rgba(0, 0, 0, 0.35);
 
   /* Base */
-  --app-bg: #ffffff;
+  --app-bg: #fdfdfd;
 
   /* Surfaces */
-  --app-surface-1: #f6f7f9;
+  --app-surface-1: #f6f6f6;
   /* cards */
   --app-surface-2: #eef0f3;
   /* panels */
@@ -41,8 +41,8 @@
 
   /* Controls (LIGHT = rendu “blanc net”) */
   --app-control: #ffffff;
-  --app-control-hover: #ffffff;
-  --app-control-pressed: #ffffff;
+  --app-control-hover: rgba(0, 0, 0, 0.02);
+  --app-control-pressed: rgba(0, 0, 0, 0.04);
   --app-control-fg: var(--app-fg);
   --app-control-border: rgba(0, 0, 0, 0.14);
 
@@ -217,4 +217,19 @@ html.dark select.ui-select option,
 html.dark select.ui-select optgroup {
   background-color: var(--app-bg);
   color: var(--app-fg);
+}
+
+
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(155, 155, 155, 0.5);
+  border-radius: 0.5rem;
+  border: transparent;
 }

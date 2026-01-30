@@ -236,16 +236,16 @@ export default function OrbatBoard({
         }
 
         // LEAD desired X
-        type LeadPos = { id: string; desiredX: number };
-        const leadPositions: LeadPos[] = [];
+        // Helpers
+        const step = style.nodeW + style.colGap;
 
-        for (const leadId of leadIds) {
+        function leadHasUnits(leadId: string) {
+            // unitIds est déjà construit plus haut
+            return unitIds.some((uid) => parentById[uid] === leadId);
+        }
+
+        function desiredXForLeadWithUnits(leadId: string) {
             const children = unitIds.filter((uid) => parentById[uid] === leadId);
-            if (children.length === 0) {
-                leadPositions.push({ id: leadId, desiredX: style.marginX });
-                continue;
-            }
-
             const centers = children
                 .map((uid) => slotById.get(uid))
                 .filter(Boolean)
@@ -254,29 +254,28 @@ export default function OrbatBoard({
             const minC = Math.min(...centers);
             const maxC = Math.max(...centers);
             const targetCenter = (minC + maxC) / 2;
-
-            leadPositions.push({
-                id: leadId,
-                desiredX: Math.round(targetCenter - style.nodeW / 2),
-            });
+            return Math.round(targetCenter - style.nodeW / 2);
         }
-
-        leadPositions.sort((a, b) => a.desiredX - b.desiredX);
 
         const minX = style.marginX;
         const maxX = autoW - style.marginX - style.nodeW;
 
-        let prevX = -Infinity;
-        for (const lp of leadPositions) {
-            let lx = Math.max(minX, Math.min(maxX, lp.desiredX));
-            if (lx < prevX + style.nodeW + style.colGap) lx = prevX + style.nodeW + style.colGap;
+        // placement en ordre __ROOT__ (pas de sort)
+        let rightCursor = maxX;
+
+        for (const leadId of leadIds) {
+            const hasUnits = leadHasUnits(leadId);
+
+            let lx = hasUnits ? desiredXForLeadWithUnits(leadId) : rightCursor;
             lx = Math.max(minX, Math.min(maxX, lx));
 
-            const s: Slot = { id: lp.id, x: lx, y: yLead, w: style.nodeW, h: style.nodeH };
+            const s: Slot = { id: leadId, x: lx, y: yLead, w: style.nodeW, h: style.nodeH };
             slots.push(s);
-            slotById.set(lp.id, s);
-            prevX = lx;
+            slotById.set(leadId, s);
+
+            if (!hasUnits) rightCursor = Math.max(minX, rightCursor - step);
         }
+
 
         // 5) SUB placement
         const unitToSubs = new Map<string, string[]>();
@@ -488,7 +487,7 @@ export default function OrbatBoard({
             ref={boardRef}
             className={[
                 "relative",
-                exportMode ? "overflow-visible rounded-none" : " border h-full overflow-hidden rounded-xl",
+                exportMode ? "overflow-visible rounded-none" : " border border-border h-full overflow-hidden rounded-xl",
             ].join(" ")}
         >
             <div className={exportMode ? "" : "h-full w-full overflow-auto"}>

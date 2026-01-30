@@ -383,24 +383,16 @@ export default function OrbatEditorSidebar({
     function btnClass(enabled: boolean) {
         return [
             "inline-flex items-center justify-center rounded-md border px-2 py-1 text-sm font-semibold",
-            "transition-colors cursor-pointer",
+            "transition-colors select-none",
             enabled
                 ? [
-                    // LIGHT: blanc net + bordure soft
                     "bg-control text-control-fg border-control-border",
-                    "hover:bg-control-hover hover:border-black/35",
-                    "active:bg-control-pressed",
-                    // DARK: “du blanc qui sort” (voile)
-                    "dark:hover:border-white/24",
+                    "hover:bg-control-hover active:bg-control-pressed",
+                    "hover:border-border",
                 ].join(" ")
-                : [
-                    "cursor-not-allowed opacity-50",
-                    "bg-surface-1 text-fg-muted border-border",
-                ].join(" "),
+                : "bg-surface-1 text-fg-muted border-border opacity-50 cursor-not-allowed",
         ].join(" ");
     }
-
-
 
     return (
         <div className="flex flex-col gap-3">
