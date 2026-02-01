@@ -75,7 +75,7 @@ const DEFAULT_STYLE: LayoutStyle = {
 
     railOffset: 60,
     subGap: 18,
-    subOffsetX: 0,
+    subOffsetX: 40,
     unitSubRailDrop: 18,
     unitSubBranchInset: 14,
 
@@ -200,7 +200,7 @@ export default function OrbatBoard({
 
         const autoW = Math.max(
             680,
-            unitsContentW + style.subOffsetX + style.marginX * 2,
+            unitsContentW + style.marginX * 2,
             leadsNeededW
         );
 
