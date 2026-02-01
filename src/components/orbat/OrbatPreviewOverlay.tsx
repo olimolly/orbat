@@ -188,7 +188,7 @@ export default function OrbatPreviewOverlay({
                     <div ref={viewportRef} className="relative flex-1 min-h-0 overflow-auto bg-bg">
                         {/* centre quand ça tient, scroll quand ça dépasse */}
                         <div className="grid min-h-full min-w-full place-items-center p-4 sm:p-6">
-                            <div style={{ transform: `scale(${effectiveScale})`, transformOrigin: "center center" }}>
+                            <div style={{ transform: `scale(${effectiveScale})`, transformOrigin: "top left" }}>
                                 <div ref={measureRef} className="inline-block align-top">
                                     <OrbatBoard
                                         contentRef={exportRef}
