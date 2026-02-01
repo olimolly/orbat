@@ -50,12 +50,14 @@ export default function LinksLayer({
     stroke = "#0033a0",
     strokeWidth = 8,
     junctionSize = 14,
+    pad = 0,
 }: {
     slots: Slot[];
     edges: Edge[];
     stroke?: string;
     strokeWidth?: number;
     junctionSize?: number;
+    pad?: number;
 }) {
     const slotById = new Map(slots.map((s) => [s.id, s]));
 
@@ -63,14 +65,14 @@ export default function LinksLayer({
     const maxBottom = Math.max(0, ...slots.map((s) => s.y + s.h));
 
     // square caps + arrondis => un peu plus que *2
-    const pad = Math.ceil(strokeWidth * 4);
+    // const pad = Math.ceil(strokeWidth * 4);
 
     return (
         <svg
             className="absolute left-0 top-0 pointer-events-none overflow-visible"
             width={maxRight + pad}
             height={maxBottom + pad}
-            style={{ width: maxRight + pad, height: maxBottom + pad }}
+            style={{ width: maxRight + pad, height: maxBottom + pad, display: "block" }}
         >
             {edges.map((e) => {
                 const aSlot = slotById.get(e.from.slotId);

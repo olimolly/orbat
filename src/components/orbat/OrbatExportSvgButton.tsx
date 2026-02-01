@@ -1,13 +1,11 @@
-// src/components/orbat/OrbatExportPngButton.tsx
 "use client";
 
 import * as React from "react";
-import { toBlob } from "html-to-image";
+import { toSvg } from "html-to-image";
 
 type Props = {
     targetRef: React.RefObject<HTMLElement | null>;
     fileName?: string;
-    pixelRatio?: number;
     className?: string;
     label?: string;
 };
@@ -32,12 +30,29 @@ const controlBtnDisabled =
     "h-9 rounded-md border px-3 text-sm font-semibold transition-colors " +
     "border-control-border bg-surface-1 text-fg-muted opacity-60 cursor-not-allowed";
 
-export default function OrbatExportPngButton({
+function dataUrlToSvgText(dataUrl: string) {
+    // html-to-image returns: data:image/svg+xml;charset=utf-8,<svg ...>
+    const comma = dataUrl.indexOf(",");
+    if (comma === -1) return dataUrl;
+
+    const meta = dataUrl.slice(0, comma);
+    const data = dataUrl.slice(comma + 1);
+
+    // If base64, decode it. Otherwise it's URI-encoded.
+    if (/;base64/i.test(meta)) {
+        const bin = atob(data);
+        // Convert binary string to UTF-8 string safely
+        const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+        return new TextDecoder("utf-8").decode(bytes);
+    }
+    return decodeURIComponent(data);
+}
+
+export default function OrbatExportSvgButton({
     targetRef,
-    fileName = "orbat.png",
-    pixelRatio = 2,
+    fileName = "orbat.svg",
     className,
-    label = "Download PNG",
+    label = "Download SVG",
 }: Props) {
     const [busy, setBusy] = React.useState(false);
 
@@ -47,7 +62,7 @@ export default function OrbatExportPngButton({
 
         setBusy(true);
         try {
-            // Wait for fonts when supported (helps stability + correct render)
+            // Wait for fonts when supported (helps stability)
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const fontsReady = (document as any).fonts?.ready as Promise<void> | undefined;
             if (fontsReady) {
@@ -62,14 +77,8 @@ export default function OrbatExportPngButton({
             const w = Math.max(1, Math.ceil(el.scrollWidth || el.getBoundingClientRect().width));
             const h = Math.max(1, Math.ceil(el.scrollHeight || el.getBoundingClientRect().height));
 
-            const bodyFont = getComputedStyle(document.body).fontFamily;
-            const elFont = getComputedStyle(el).fontFamily;
-            console.log("body font:", bodyFont);
-            console.log("export element font:", elFont);
-
-            const blob = await toBlob(el, {
+            const dataUrl = await toSvg(el, {
                 cacheBust: true,
-                pixelRatio,
                 width: w,
                 height: h,
 
@@ -83,21 +92,24 @@ export default function OrbatExportPngButton({
                 preferredFontFormat: "woff2",
             });
 
-            if (!blob) {
-                alert("PNG export failed (empty blob).");
+            if (!dataUrl) {
+                alert("SVG export failed (empty result).");
                 return;
             }
+
+            const svgText = dataUrlToSvgText(dataUrl);
+            const blob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
 
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = fileName;
+            a.download = fileName.endsWith(".svg") ? fileName : `${fileName}.svg`;
             document.body.appendChild(a);
             a.click();
             a.remove();
             URL.revokeObjectURL(url);
         } catch (e) {
-            alert(`PNG export failed: ${safeMsg(e)}`);
+            alert(`SVG export failed: ${safeMsg(e)}`);
         } finally {
             setBusy(false);
         }
@@ -112,7 +124,7 @@ export default function OrbatExportPngButton({
                 onClick={() => void handleDownload()}
                 disabled={disabled}
                 className={className ?? (disabled ? controlBtnDisabled : controlBtn)}
-                title="Export the board as a PNG (real size), transparent background"
+                title="Export the board as an SVG (real size), transparent background"
             >
                 {busy ? "Rendering…" : label}
             </button>

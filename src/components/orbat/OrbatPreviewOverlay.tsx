@@ -5,6 +5,7 @@ import * as React from "react";
 import OrbatBoard from "@/components/orbat/OrbatBoard";
 import OrbatExportPngButton from "@/components/orbat/OrbatExportPngButton";
 import type { OrbatNode, ParentByNodeId, ChildrenOrder } from "@/lib/orbat/types";
+import OrbatExportSvgButton from "./OrbatExportSvgButton";
 
 type Props = {
     open: boolean;
@@ -166,6 +167,12 @@ export default function OrbatPreviewOverlay({
                                 fileName="orbat.png"
                                 label="Export PNG"
                             />
+                            <OrbatExportSvgButton
+                                targetRef={exportRef}
+                                fileName="orbat.svg"
+                                label="Export SVG"
+                            />
+
 
                             <button
                                 type="button"
@@ -181,7 +188,7 @@ export default function OrbatPreviewOverlay({
                     <div ref={viewportRef} className="relative flex-1 min-h-0 overflow-auto bg-bg">
                         {/* centre quand ça tient, scroll quand ça dépasse */}
                         <div className="grid min-h-full min-w-full place-items-center p-4 sm:p-6">
-                            <div style={{ transform: `scale(${effectiveScale})`, transformOrigin: "top left" }}>
+                            <div style={{ transform: `scale(${effectiveScale})`, transformOrigin: "center center" }}>
                                 <div ref={measureRef} className="inline-block align-top">
                                     <OrbatBoard
                                         contentRef={exportRef}

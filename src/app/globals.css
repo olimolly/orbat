@@ -162,10 +162,12 @@ dialog::backdrop {
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  font-family: var(--font-sans);
 }
 
 .orbat-node {
   transition: box-shadow 120ms ease, transform 120ms ease;
+  font-family: var(--font-sans);
 }
 
 .orbat-node--hover {
@@ -221,13 +223,24 @@ html.dark select.ui-select optgroup {
 
 
 
+.orbat-export,
+.orbat-export * {
+  font-family: var(--font-sans) !important;
+  font-kerning: normal;
+  font-feature-settings: "kern";
+}
+
+
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background-color: rgba(155, 155, 155, 0.5);
   border-radius: 0.5rem;

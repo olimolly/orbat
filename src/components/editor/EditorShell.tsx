@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import type {
-    OrbatNode,
-    ParentByNodeId,
-    ChildrenOrder,
-    NodeId,
-    UnitKind,
+import {
+    type OrbatNode,
+    type ParentByNodeId,
+    type ChildrenOrder,
+    type NodeId,
+    type UnitKind,
+    ROOT_ID,
 } from "@/lib/orbat/types";
 
 import OrbatInitReset, {
@@ -27,6 +28,7 @@ import OrbatBoard from "@/components/orbat/OrbatBoard";
 
 import type { EditorState as ExportState } from "@/lib/orbat/io";
 import OrbatPreviewOverlay from "../orbat/OrbatPreviewOverlay";
+import OrbatExportSvgButton from "../orbat/OrbatExportSvgButton";
 
 const STORAGE_KEY = "orbat-editor-v1";
 
@@ -53,10 +55,21 @@ function buildInitialOrbat(params: InitParams): {
     const parentById: ParentByNodeId = {};
     const childrenOrder: ChildrenOrder = {};
 
+    //  ROOT unique
+    nodes.push({
+        id: ROOT_ID,
+        displayId: "ROOT",
+        level: "LEAD",
+        kind: "unitBlufor" as UnitKind,
+    });
+    parentById[ROOT_ID] = null;
+    childrenOrder[ROOT_ID] = [];
+
     const leadIds: string[] = [];
     const unitIdsByLead: Record<string, string[]> = {};
     const subIdsByUnit: Record<string, string[]> = {};
 
+    //  LEAD (enfants de ROOT)
     for (let li = 1; li <= leadCount; li++) {
         const id = `L${li}`;
         leadIds.push(id);
@@ -68,12 +81,15 @@ function buildInitialOrbat(params: InitParams): {
             kind: "unitBlufor" as UnitKind,
             labelMain: li === 1 ? "HQ" : `PL${li}`,
         });
-        parentById[id] = null;
+
+        parentById[id] = ROOT_ID;
         unitIdsByLead[id] = [];
     }
 
-    childrenOrder.__ROOT__ = [...leadIds];
+    //  ordre des LEAD
+    childrenOrder[ROOT_ID] = [...leadIds];
 
+    // UNIT
     let uCounter = 1;
     for (const leadId of leadIds) {
         for (let ui = 0; ui < unitsPerLead; ui++) {
@@ -93,6 +109,7 @@ function buildInitialOrbat(params: InitParams): {
         childrenOrder[leadId] = [...unitIdsByLead[leadId]];
     }
 
+    // SUB
     let sCounter = 1;
     for (const leadId of leadIds) {
         for (const uid of unitIdsByLead[leadId]) {
@@ -157,13 +174,9 @@ export default function EditorShell() {
 
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-
-    // refs used by inline export button (not the preview overlay)
     const exportRef = useRef<HTMLDivElement>(null);
-
     const isPreview = editor.mode === "preview";
 
-    // exportable document state (NO mode)
     const exportState = useMemo<ExportState>(
         () => ({
             initParams: editor.initParams,
@@ -187,7 +200,6 @@ export default function EditorShell() {
         ]
     );
 
-    // load localStorage (document only)
     useEffect(() => {
         const saved = safeParse<ExportState>(localStorage.getItem(STORAGE_KEY));
         if (!saved) return;
@@ -205,7 +217,6 @@ export default function EditorShell() {
         return () => window.clearTimeout(t);
     }, []);
 
-    // save localStorage (document only)
     useEffect(() => {
         const t = window.setTimeout(() => {
             try {
@@ -251,7 +262,16 @@ export default function EditorShell() {
                 label="Color preset"
             />
 
-            <OrbatExportPngButton targetRef={exportRef} />
+            <OrbatExportPngButton
+                targetRef={exportRef}
+                fileName="orbat.png"
+                label="Export PNG"
+            />
+            <OrbatExportSvgButton
+                targetRef={exportRef}
+                fileName="orbat.svg"
+                label="Export SVG"
+            />
         </>
     );
 
@@ -270,10 +290,8 @@ export default function EditorShell() {
         });
     }
 
-
     return (
         <div className="h-full min-h-0 bg-bg text-fg">
-            {/* Overlay should be mounted once, at root */}
             <OrbatPreviewOverlay
                 open={editor.mode === "preview"}
                 onClose={() => setEditor((p) => ({ ...p, mode: "edit" }))}
@@ -286,7 +304,6 @@ export default function EditorShell() {
             />
 
             <div className="grid h-full min-h-0 lg:grid-cols-[360px_1fr]">
-                {/* gauche */}
                 <div className="min-w-0 min-h-0 space-y-3 overflow-y-auto overflow-x-hidden border-b-2 border-border p-3 lg:border-b-0 lg:border-r">
                     <div className="rounded-xl border border-border bg-surface-1 px-3 py-2 text-sm">
                         <div className="flex items-center justify-between gap-2">
@@ -318,13 +335,10 @@ export default function EditorShell() {
                             >
                                 Preview
                             </button>
-
                         </div>
 
                         {isPreview ? (
-                            <div className="mt-2 text-xs text-fg-muted">
-                                Preview mode: overlay opened.
-                            </div>
+                            <div className="mt-2 text-xs text-fg-muted">Preview mode: overlay opened.</div>
                         ) : null}
                     </div>
 
@@ -349,16 +363,13 @@ export default function EditorShell() {
                         setChildrenOrder={(updater) =>
                             setEditor((p) => ({
                                 ...p,
-                                childrenOrder:
-                                    typeof updater === "function" ? updater(p.childrenOrder) : updater,
+                                childrenOrder: typeof updater === "function" ? updater(p.childrenOrder) : updater,
                             }))
                         }
                     />
                 </div>
 
-                {/* droite */}
                 <div className="flex min-h-0 flex-col overflow-hidden lg:pt-3">
-                    {/* Mobile trigger (only mobile) */}
                     <div className="relative lg:hidden">
                         <button
                             type="button"
@@ -373,15 +384,10 @@ export default function EditorShell() {
                         >
                             Actions
                         </button>
-
                     </div>
 
-                    {/* Desktop actions (only lg+) */}
-                    <div className="hidden lg:flex flex-wrap items-start gap-1 px-3 lg:max-h-none">
-                        {actions}
-                    </div>
+                    <div className="hidden lg:flex flex-wrap items-start gap-1 px-3 lg:max-h-none">{actions}</div>
 
-                    {/* Mobile drawer */}
                     {mobileMenuOpen && (
                         <div className="fixed inset-0 z-50 lg:hidden">
                             <button
@@ -403,15 +409,12 @@ export default function EditorShell() {
                                     </button>
                                 </div>
 
-                                <div className="flex max-h-full flex-col gap-2 overflow-auto p-3">
-                                    {actions}
-                                </div>
+                                <div className="flex max-h-full flex-col gap-2 overflow-auto p-3">{actions}</div>
                             </div>
                         </div>
                     )}
 
                     <div className="min-h-0 flex-1 p-1 lg:p-3">
-
                         <OrbatBoard
                             contentRef={exportRef}
                             exportMode={false}
@@ -457,5 +460,4 @@ export default function EditorShell() {
             </div>
         </div>
     );
-
 }

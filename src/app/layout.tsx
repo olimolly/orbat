@@ -15,8 +15,8 @@ const inter = Inter({
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={inter.variable} suppressHydrationWarning>
-      <body className={`min-h-screen flex flex-col bg-bg text-fg`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`min-h-screen flex flex-col bg-bg text-fg ${inter.variable}`}>
         <Providers>
           {/* NAVBAR GLOBALE */}
           <header className="border-b border-border">
