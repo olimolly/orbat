@@ -577,7 +577,7 @@ export default function OrbatBoard({
             ].join(" ")}
         >
             <div className={exportMode ? "" : "h-full w-full overflow-auto p-3"}>
-                <div ref={contentRef} className="origin-center" style={contentStyle}>
+                <div ref={contentRef} className="origin-top-left" style={contentStyle}>
                     <LinksLayer
                         slots={slots}
                         edges={edges}
