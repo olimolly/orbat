@@ -181,7 +181,7 @@ export default function OrbatBoard({
 
         // Units centered as one big content block (avec groupGap entre groups)
         if (unitsContentW > 0) {
-            let cursorX = Math.max(style.marginX, Math.round((autoW - unitsContentW) / 2));
+            let cursorX = style.marginX;
 
             for (let gi = 0; gi < unitGroups.length; gi++) {
                 const group = unitGroups[gi];
@@ -609,7 +609,7 @@ export default function OrbatBoard({
             ].join(" ")}
         >
             <div className={exportMode ? "" : "h-full w-full overflow-auto p-3"}>
-                <div ref={contentRef} className="origin-top-left" style={contentStyle}>
+                <div ref={contentRef} className="origin-top-left" style={{ ...contentStyle, transformOrigin: "0 0" }}>
                     <LinksLayer slots={slots} edges={edges} stroke={stroke ?? "#000"} strokeWidth={linkStrokeWidth} />
 
                     {/* Drop gaps overlay */}

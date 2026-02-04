@@ -69,6 +69,7 @@ export default function OrbatPreviewOverlay({
 
             // contain + léger upscale autorisé
             setFitScale(clamp(Math.min(sx, sy), 0.05, 1.15));
+
         };
 
         compute();
@@ -110,6 +111,29 @@ export default function OrbatPreviewOverlay({
         window.addEventListener("keydown", onKeyDown);
         return () => window.removeEventListener("keydown", onKeyDown);
     }, [open, onClose]);
+
+    React.useLayoutEffect(() => {
+        if (!open) return;
+
+        const vp = viewportRef.current;
+        if (!vp) return;
+
+        // 2 frames = laisse le DOM/layout se stabiliser (fitScale, resize observer)
+        const r1 = requestAnimationFrame(() => {
+            vp.scrollTop = 0;
+            vp.scrollLeft = 0;
+
+            const r2 = requestAnimationFrame(() => {
+                vp.scrollTop = 0;
+                vp.scrollLeft = 0;
+            });
+
+            return () => cancelAnimationFrame(r2);
+        });
+
+        return () => cancelAnimationFrame(r1);
+    }, [open]);
+
 
     if (!open) return null;
 
@@ -187,8 +211,13 @@ export default function OrbatPreviewOverlay({
                     {/* viewport */}
                     <div ref={viewportRef} className="relative flex-1 min-h-0 overflow-auto bg-bg">
                         {/* centre quand ça tient, scroll quand ça dépasse */}
-                        <div className="grid min-h-full min-w-full place-items-center p-4 sm:p-6">
-                            <div style={{ transform: `scale(${effectiveScale})` }}>
+                        <div className="min-h-full min-w-full p-4 sm:p-6">
+                            <div
+                                style={{
+                                    transform: `scale(${effectiveScale})`,
+                                    transformOrigin: "0 0",
+                                }}
+                            >
                                 <div ref={measureRef} className="inline-block align-top">
                                     <OrbatBoard
                                         contentRef={exportRef}
@@ -206,6 +235,7 @@ export default function OrbatPreviewOverlay({
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>
