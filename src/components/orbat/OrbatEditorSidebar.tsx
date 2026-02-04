@@ -1,4 +1,3 @@
-// src/components/orbat/OrbatEditorSidebar.tsx
 "use client";
 
 import * as React from "react";
@@ -10,8 +9,10 @@ import {
     type NodeLevel,
     type UnitKind,
     UNIT_KIND_LABEL,
+    ROOT_ID,
 } from "@/lib/orbat/types";
 import TreeView from "./TreeView";
+import { buildChildrenMap } from "@/lib/orbat/tree";
 
 type Props = {
     nodes: OrbatNode[];
@@ -61,18 +62,6 @@ function findAncestor(
     return null;
 }
 
-function buildChildrenMap(nodes: OrbatNode[], parentById: ParentByNodeId) {
-    const children = new Map<string, string[]>();
-    for (const n of nodes) children.set(n.id, []);
-    for (const n of nodes) {
-        const p = parentById[n.id];
-        if (!p) continue;
-        if (!children.has(p)) children.set(p, []);
-        children.get(p)!.push(n.id);
-    }
-    return children;
-}
-
 type UndoSnapshot = {
     nodes: OrbatNode[];
     parentById: ParentByNodeId;
@@ -80,6 +69,7 @@ type UndoSnapshot = {
     selectedId: NodeId | null;
     message: string;
 };
+
 
 export default function OrbatEditorSidebar({
     nodes,
@@ -92,7 +82,6 @@ export default function OrbatEditorSidebar({
     setChildrenOrder,
 }: Props) {
     const nodesById = React.useMemo(() => buildNodesById(nodes), [nodes]);
-
     const selectedNode = selectedId ? nodesById.get(selectedId) ?? null : null;
 
     const targetLeadId =
@@ -101,21 +90,8 @@ export default function OrbatEditorSidebar({
     const targetUnitId =
         selectedId ? findAncestor(selectedId, "UNIT", nodesById, parentById) : null;
 
-    const leadRoots = React.useMemo(() => {
-        const res: string[] = [];
-        for (const n of nodes) {
-            if (n.level === "LEAD" && parentById[n.id] == null) res.push(n.id);
-        }
-        const ordered = childrenOrder.__ROOT__ ?? [];
-        if (ordered.length === 0) return res;
-
-        const set = new Set(ordered);
-        const tail = res.filter((id) => !set.has(id));
-        return [...ordered.filter((id) => res.includes(id)), ...tail];
-    }, [nodes, parentById, childrenOrder.__ROOT__]);
-
     // ─────────────────────────────────────────────
-    // UNDO (toast) : snapshot avant delete
+    // UNDO (toast)
     // ─────────────────────────────────────────────
     const [undo, setUndo] = React.useState<UndoSnapshot | null>(null);
     const undoTimerRef = React.useRef<number | null>(null);
@@ -197,29 +173,6 @@ export default function OrbatEditorSidebar({
         [nodes, setNodes, setParentById, setChildrenOrder, onSelect]
     );
 
-    const addLead = React.useCallback(() => {
-        if (!setNodes || !setParentById || !setChildrenOrder || !onSelect) return;
-
-        const id = nextId("L", nodes);
-
-        const n: OrbatNode = {
-            id,
-            displayId: id,
-            level: "LEAD",
-            kind: "unitBlufor",
-            labelMain: "PL",
-        };
-
-        setNodes((prev) => [...prev, n]);
-        setParentById((prev) => ({ ...prev, [id]: null }));
-        setChildrenOrder((prev) => ({
-            ...prev,
-            __ROOT__: [...(prev.__ROOT__ ?? []), id],
-        }));
-
-        onSelect(id);
-    }, [nodes, setNodes, setParentById, setChildrenOrder, onSelect]);
-
     const deleteCascade = React.useCallback(
         (startId: NodeId) => {
             if (!setNodes || !setParentById || !setChildrenOrder || !onSelect) return 0;
@@ -251,7 +204,7 @@ export default function OrbatEditorSidebar({
                 for (const key of Object.keys(next)) {
                     next[key] = (next[key] ?? []).filter((cid) => !toDelete.has(cid));
                 }
-                next.__ROOT__ = (next.__ROOT__ ?? []).filter((id) => !toDelete.has(id));
+                next[ROOT_ID] = (next[ROOT_ID] ?? []).filter((id) => !toDelete.has(id));
                 return next;
             });
 
@@ -274,16 +227,28 @@ export default function OrbatEditorSidebar({
     const setSelectedKind = React.useCallback(
         (nextKind: UnitKind) => {
             if (!selectedId) return;
-            setNodes?.((prev) =>
-                prev.map((n) => (n.id === selectedId ? { ...n, kind: nextKind } : n))
-            );
+            setNodes?.((prev) => prev.map((n) => (n.id === selectedId ? { ...n, kind: nextKind } : n)));
         },
         [selectedId, setNodes]
     );
 
+
     // ─────────────────────────────────────────────
-    // +/- actions (avec undo)
+    // +/- actions (keep your existing UI logic)
     // ─────────────────────────────────────────────
+    const leadRoots = React.useMemo(() => {
+        // LEAD enfants de ROOT_ID
+        const raw = (childrenOrder[ROOT_ID] ?? []).filter((id) => nodesById.get(id)?.level === "LEAD");
+        // fallback if childrenOrder not set properly
+        if (raw.length > 0) return raw;
+
+        const res: string[] = [];
+        for (const n of nodes) {
+            if (n.level === "LEAD" && parentById[n.id] === ROOT_ID) res.push(n.id);
+        }
+        return res;
+    }, [nodes, parentById, childrenOrder, nodesById]);
+
     const canLeadPlus = true;
     const canLeadMinus = hasSelection && targetLeadId != null && leadRoots.length > 1;
 
@@ -293,7 +258,28 @@ export default function OrbatEditorSidebar({
     const canSubPlus = targetUnitId != null;
     const canSubMinus = hasSelection && selectedNode?.level === "SUB";
 
-    const handleLeadPlus = React.useCallback(() => addLead(), [addLead]);
+    const handleLeadPlus = React.useCallback(() => {
+        if (!setNodes || !setParentById || !setChildrenOrder || !onSelect) return;
+
+        const id = nextId("L", nodes);
+
+        const n: OrbatNode = {
+            id,
+            displayId: id,
+            level: "LEAD",
+            kind: "unitBlufor",
+            labelMain: "PL",
+        };
+
+        setNodes((prev) => [...prev, n]);
+        setParentById((prev) => ({ ...prev, [id]: ROOT_ID }));
+        setChildrenOrder((prev) => ({
+            ...prev,
+            [ROOT_ID]: [...(prev[ROOT_ID] ?? []), id],
+        }));
+
+        onSelect(id);
+    }, [nodes, setNodes, setParentById, setChildrenOrder, onSelect]);
 
     const handleLeadMinus = React.useCallback(() => {
         if (!canLeadMinus || !targetLeadId) return;
@@ -334,7 +320,7 @@ export default function OrbatEditorSidebar({
         clearUndoSoon();
     }, [canSubMinus, selectedNode, pushUndo, deleteCascade, clearUndoSoon]);
 
-    // Keyboard delete/backspace (stable deps)
+    // Keyboard delete/backspace
     React.useEffect(() => {
         function onKeyDown(e: KeyboardEvent) {
             if (!canEdit) return;
@@ -492,7 +478,8 @@ export default function OrbatEditorSidebar({
                             if (!p) return;
                             if (p.level === "SUB") return;
 
-                            const level: NodeLevel = hint ?? (p.level === "LEAD" ? "UNIT" : "SUB");
+                            const level: NodeLevel =
+                                hint ?? (p.level === "LEAD" ? "UNIT" : "SUB");
                             addChild(parentId, level);
                         }
                         : undefined
@@ -527,7 +514,7 @@ export default function OrbatEditorSidebar({
                     <select
                         title="Click a node in the tree, then change its kind here."
                         className="ui-select h-9 rounded-md border bg-control px-2 text-sm text-control-fg border-control-border
-                            focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50"
+                                    focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50"
                         disabled={!selectedNode || !canEdit}
                         value={selectedNode?.kind ?? "unitBlufor"}
                         onChange={(e) => setSelectedKind(e.target.value as UnitKind)}
@@ -538,8 +525,6 @@ export default function OrbatEditorSidebar({
                             </option>
                         ))}
                     </select>
-
-
                 </label>
             </div>
 
@@ -573,5 +558,4 @@ export default function OrbatEditorSidebar({
             ) : null}
         </div>
     );
-
 }

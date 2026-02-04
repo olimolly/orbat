@@ -58,9 +58,9 @@ function buildInitialOrbat(params: InitParams): {
     //  ROOT unique
     nodes.push({
         id: ROOT_ID,
-        displayId: "ROOT",
-        level: "LEAD",
-        kind: "unitBlufor" as UnitKind,
+        displayId: "Orbat",
+        level: "ROOT",
+        kind: "hQ" as UnitKind,
     });
     parentById[ROOT_ID] = null;
     childrenOrder[ROOT_ID] = [];
@@ -69,7 +69,12 @@ function buildInitialOrbat(params: InitParams): {
     const unitIdsByLead: Record<string, string[]> = {};
     const subIdsByUnit: Record<string, string[]> = {};
 
-    //  LEAD (enfants de ROOT)
+    /**
+     * Pour chaque LEAD (enfants de ROOT), on l'enregistre:
+     * 1. En tant que element de tableau leadIds,
+     * 2. En tant que objet node,
+     * 3. En tant que place dans l'arbre, c'est à dire son parent et ses enfant.
+     */
     for (let li = 1; li <= leadCount; li++) {
         const id = `L${li}`;
         leadIds.push(id);
@@ -83,10 +88,10 @@ function buildInitialOrbat(params: InitParams): {
         });
 
         parentById[id] = ROOT_ID;
-        unitIdsByLead[id] = [];
+        unitIdsByLead[id] = []; // liste des units de CE lead (dans l’ordre de création).
     }
 
-    //  ordre des LEAD
+    //  INIT ordre des LEAD
     childrenOrder[ROOT_ID] = [...leadIds];
 
     // UNIT
@@ -100,7 +105,7 @@ function buildInitialOrbat(params: InitParams): {
                 id: uid,
                 displayId: uid,
                 level: "UNIT",
-                kind: "unitBlufor" as UnitKind,
+                kind: "infantry" as UnitKind,
             });
 
             parentById[uid] = leadId;
@@ -121,11 +126,13 @@ function buildInitialOrbat(params: InitParams): {
                     id: sid,
                     displayId: sid,
                     level: "SUB",
-                    kind: "unitBlufor" as UnitKind,
+                    kind: "recon" as UnitKind,
                 });
 
-                parentById[sid] = uid;
+                parentById[sid] = uid; // parent (-> son UNIT respective)
+                // pas d'enfant (3e et dernier niveau)
             }
+
             if (subIdsByUnit[uid].length > 0) {
                 childrenOrder[uid] = [...subIdsByUnit[uid]];
             }
@@ -134,6 +141,36 @@ function buildInitialOrbat(params: InitParams): {
 
     return { nodes, parentById, childrenOrder, selectedId: leadIds[0] ?? null };
 }
+
+function sanitizeChildrenOrder(
+    nodes: OrbatNode[],
+    parentById: ParentByNodeId,
+    childrenOrder: ChildrenOrder
+): ChildrenOrder {
+    const nodeSet = new Set(nodes.map(n => n.id));
+
+    // build childrenMap rapide
+    const childrenMap = new Map<NodeId, Set<NodeId>>();
+    for (const n of nodes) childrenMap.set(n.id, new Set());
+    for (const n of nodes) {
+        const p = parentById[n.id];
+        if (!p) continue;
+        if (!childrenMap.has(p)) childrenMap.set(p, new Set());
+        childrenMap.get(p)!.add(n.id);
+    }
+
+    const next: ChildrenOrder = {};
+    for (const [pid, order] of Object.entries(childrenOrder)) {
+        const parentId = pid as NodeId;
+        const allowed = childrenMap.get(parentId);
+        if (!allowed) continue;
+
+        const filtered = (order ?? []).filter((id) => nodeSet.has(id) && allowed.has(id as NodeId));
+        if (filtered.length) next[parentId] = filtered as NodeId[];
+    }
+    return next;
+}
+
 
 type EditorMode = "edit" | "preview";
 type EditorState = {
@@ -250,10 +287,12 @@ export default function EditorShell() {
                     setEditor((prev) => ({
                         ...prev,
                         ...state,
+                        childrenOrder: sanitizeChildrenOrder(state.nodes, state.parentById, state.childrenOrder),
                         scale: state.scale ?? prev.scale,
                         colorPresetId: state.colorPresetId ?? prev.colorPresetId,
                     }))
                 }
+
             />
 
             <OrbatColorPresetSelect

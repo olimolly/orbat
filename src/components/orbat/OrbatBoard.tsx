@@ -16,6 +16,7 @@ import type { Edge } from "@/lib/orbat/edges";
 
 import LinksLayer, { UNIT_BOTTOMLEFT_INSET } from "../orbat/LinksLayer";
 import OrbatSVG from "../orbat/OrbatSVG";
+import { buildChildrenMap, siblingsOfLevel, stableOrder } from "@/lib/orbat/tree";
 
 type LayoutStyle = {
     nodeW: number;
@@ -75,7 +76,7 @@ const DEFAULT_STYLE: LayoutStyle = {
 
     railOffset: 60,
     subGap: 18,
-    subOffsetX: 40,
+    subOffsetX: 24,
     unitSubRailDrop: 18,
     unitSubBranchInset: 14,
 
@@ -97,30 +98,6 @@ function arrayInsertMove<T>(arr: T[], from: number, to: number) {
     return next;
 }
 
-function buildChildrenMap(nodes: OrbatNode[], parentById: ParentByNodeId) {
-    const children = new Map<NodeId, NodeId[]>();
-    for (const n of nodes) children.set(n.id, []);
-    for (const n of nodes) {
-        const p = parentById[n.id];
-        if (!p) continue;
-        if (!children.has(p)) children.set(p, []);
-        children.get(p)!.push(n.id);
-    }
-    return children;
-}
-
-function stableOrder(
-    parentId: NodeId,
-    rawChildren: NodeId[],
-    childrenOrder: ChildrenOrder | undefined
-): NodeId[] {
-    const ordered = childrenOrder?.[parentId];
-    if (!ordered?.length) return rawChildren;
-
-    const set = new Set(ordered);
-    const tail = rawChildren.filter((id) => !set.has(id));
-    return [...ordered.filter((id) => rawChildren.includes(id)), ...tail];
-}
 
 export default function OrbatBoard({
     nodes,
@@ -156,10 +133,7 @@ export default function OrbatBoard({
         return m;
     }, [safeNodes]);
 
-    const childrenMap = React.useMemo(
-        () => buildChildrenMap(safeNodes, parentById),
-        [safeNodes, parentById]
-    );
+    const childrenMap = React.useMemo(() => buildChildrenMap(safeNodes, parentById), [safeNodes, parentById]);
 
     const { slots, edges, computedBoard, slotById } = React.useMemo(() => {
         const nodesByIdLocal = new Map<string, OrbatNode>();
@@ -172,14 +146,13 @@ export default function OrbatBoard({
             if (n.level === "LEAD" && parentById[n.id] === ROOT_ID) leadRoots.push(n.id);
         }
 
-        const leadIds =
-            childrenOrder?.[ROOT_ID]?.length ? childrenOrder[ROOT_ID] : leadRoots;
+        const orderedLeads = childrenOrder?.[ROOT_ID];
+        const leadIds = orderedLeads && orderedLeads.length > 0 ? orderedLeads : leadRoots;
 
         // 2) UNIT groups per LEAD
         const unitGroups: string[][] = leadIds.map((leadId) => {
             const raw = (childrenMap.get(leadId) ?? []).filter((id) => nodesByIdLocal.get(id)?.level === "UNIT");
-            const ordered = stableOrder(leadId, raw, childrenOrder);
-            return ordered;
+            return stableOrder(leadId, raw, childrenOrder);
         });
 
         // Flatten units in lead order
@@ -195,14 +168,9 @@ export default function OrbatBoard({
         const unitsContentW =
             groupWidths.reduce((a, b) => a + b, 0) + Math.max(0, nonEmptyGroups - 1) * style.groupGap;
 
-        const leadsNeededW =
-            style.marginX * 2 + leadIds.length * style.nodeW + Math.max(0, leadIds.length - 1) * style.colGap;
+        const leadsNeededW = style.marginX * 2 + leadIds.length * style.nodeW + Math.max(0, leadIds.length - 1) * style.colGap;
 
-        const autoW = Math.max(
-            680,
-            unitsContentW + style.marginX * 2,
-            leadsNeededW
-        );
+        const autoW = Math.max(680, unitsContentW + style.marginX * 2, leadsNeededW);
 
         // 4) slots
         const slots: Slot[] = [];
@@ -232,9 +200,7 @@ export default function OrbatBoard({
             }
         }
 
-        // LEAD placement:
-        // - si lead a des units => center au-dessus des units
-        // - sinon => pack à droite (ordre leadIds) sans superposition
+        // LEAD placement
         const minX = style.marginX;
         const maxX = autoW - style.marginX - style.nodeW;
         const step = style.nodeW + style.colGap;
@@ -274,9 +240,7 @@ export default function OrbatBoard({
             let lx = hasUnits ? desiredXForLeadWithUnits(leadId) : rightCursor;
             lx = Math.max(minX, Math.min(maxX, lx));
 
-            // avoid overlap
             if (collides(lx, usedLeadX)) {
-                // try shift right then left
                 let found = false;
 
                 // right
@@ -289,6 +253,7 @@ export default function OrbatBoard({
                     }
                 }
 
+                // left
                 if (!found) {
                     for (let k = 1; k < 50; k++) {
                         const cand = Math.max(minX, Math.min(maxX, lx - k * step));
@@ -342,8 +307,7 @@ export default function OrbatBoard({
         // 6) edges
         const edges: Edge[] = [];
 
-        const leadUnitRailY =
-            leadIds.length > 0 && unitIds.length > 0 ? yLead + style.nodeH + style.railOffset : null;
+        const leadUnitRailY = leadIds.length > 0 && unitIds.length > 0 ? yLead + style.nodeH + style.railOffset : null;
 
         if (leadUnitRailY != null) {
             for (const unitId of unitIds) {
@@ -358,9 +322,7 @@ export default function OrbatBoard({
                 const cx = Math.round(centerX(cSlot));
 
                 const via =
-                    px === cx
-                        ? [{ x: px, y: leadUnitRailY }]
-                        : [{ x: px, y: leadUnitRailY }, { x: cx, y: leadUnitRailY }];
+                    px === cx ? [{ x: px, y: leadUnitRailY }] : [{ x: px, y: leadUnitRailY }, { x: cx, y: leadUnitRailY }];
 
                 edges.push({
                     id: `${leadId}-${unitId}`,
@@ -409,42 +371,36 @@ export default function OrbatBoard({
         const padBottom = exportMode ? 40 : 218;
         const autoH = maxBottom + padBottom;
 
-        // ─────────────────────────────────────────────
-        // TRIM bbox (export only) : supprime le vide à droite/gauche/haut
-        // ─────────────────────────────────────────────
-        let boardW = autoW;
-        let boardH = autoH;
+        // TRIM bbox (export only)
+        let boardW2 = autoW;
+        let boardH2 = autoH;
 
         if (exportMode && slots.length > 0) {
-            let minX = Infinity;
-            let maxX = -Infinity;
-            let minY = Infinity;
-            let maxY = -Infinity;
+            let minX2 = Infinity;
+            let maxX2 = -Infinity;
+            let minY2 = Infinity;
+            let maxY2 = -Infinity;
 
-            // slots bbox
             for (const s of slots) {
-                minX = Math.min(minX, s.x);
-                maxX = Math.max(maxX, s.x + s.w);
-                minY = Math.min(minY, s.y);
-                maxY = Math.max(maxY, s.y + s.h);
+                minX2 = Math.min(minX2, s.x);
+                maxX2 = Math.max(maxX2, s.x + s.w);
+                minY2 = Math.min(minY2, s.y);
+                maxY2 = Math.max(maxY2, s.y + s.h);
             }
 
-            // edges bbox (via points)
             for (const e of edges) {
                 if (!e.via) continue;
                 for (const p of e.via) {
-                    minX = Math.min(minX, p.x);
-                    maxX = Math.max(maxX, p.x);
-                    minY = Math.min(minY, p.y);
-                    maxY = Math.max(maxY, p.y);
+                    minX2 = Math.min(minX2, p.x);
+                    maxX2 = Math.max(maxX2, p.x);
+                    minY2 = Math.min(minY2, p.y);
+                    maxY2 = Math.max(maxY2, p.y);
                 }
             }
 
-            const PAD = 0; // marge de sécurité pour stroke/antialias
-
-            // shift tout pour commencer à PAD
-            const dx = minX - PAD;
-            const dy = minY - PAD;
+            const PAD = 0;
+            const dx = minX2 - PAD;
+            const dy = minY2 - PAD;
 
             if (Number.isFinite(dx) && Number.isFinite(dy)) {
                 for (const s of slots) {
@@ -459,8 +415,8 @@ export default function OrbatBoard({
                     }
                 }
 
-                boardW = Math.ceil((maxX - minX) + PAD * 2);
-                boardH = Math.ceil((maxY - minY) + PAD * 2);
+                boardW2 = Math.ceil(maxX2 - minX2 + PAD * 2);
+                boardH2 = Math.ceil(maxY2 - minY2 + PAD * 2);
             }
         }
 
@@ -468,9 +424,8 @@ export default function OrbatBoard({
             slots,
             edges,
             slotById,
-            computedBoard: { w: boardW, h: boardH },
+            computedBoard: { w: boardW2, h: boardH2 },
         };
-
     }, [safeNodes, parentById, childrenOrder, style, exportMode, childrenMap]);
 
     const w = boardW ?? computedBoard.w;
@@ -481,10 +436,9 @@ export default function OrbatBoard({
     }, [w, h, onBoardSize]);
 
     // ─────────────────────────────────────────────
-    // DnD
+    // DnD (Drop gaps)
     // ─────────────────────────────────────────────
-    const dragRef = React.useRef<{ parentId: NodeId; draggedId: NodeId } | null>(null);
-    const hoverRef = React.useRef<{ overId: NodeId; pos: "before" | "after" } | null>(null);
+    const dragRef = React.useRef<{ parentId: NodeId; draggedId: NodeId; level: OrbatNode["level"] } | null>(null);
 
     const [dragging, setDragging] = React.useState<{
         parentId: NodeId;
@@ -492,9 +446,11 @@ export default function OrbatBoard({
         level: OrbatNode["level"];
     } | null>(null);
 
-    const [dropHint, setDropHint] = React.useState<{ id: NodeId; pos: "before" | "after" } | null>(
-        null
-    );
+    const [dropHint, setDropHint] = React.useState<{
+        parentId: NodeId;
+        level: OrbatNode["level"];
+        index: number;
+    } | null>(null);
 
     const [kindEditor, setKindEditor] = React.useState<{ id: NodeId } | null>(null);
 
@@ -519,26 +475,18 @@ export default function OrbatBoard({
     }, [kindEditor]);
 
     function clearHints() {
-        hoverRef.current = null;
         setDropHint(null);
     }
 
-    function siblingsOf(parentId: NodeId, level: OrbatNode["level"]): NodeId[] {
-        const raw = (childrenMap.get(parentId) ?? []).filter((id) => {
-            const n = nodesById.get(id);
-            return n?.level === level;
-        });
+    const siblingsOf = React.useCallback(
+        (parentId: NodeId, level: OrbatNode["level"]) =>
+            siblingsOfLevel(parentId, level, childrenMap, nodesById, childrenOrder),
+        [childrenMap, nodesById, childrenOrder]
+    );
 
-        const ordered = childrenOrder?.[parentId];
-        if (!ordered?.length) return raw;
 
-        const orderedFiltered = ordered.filter((id) => raw.includes(id));
-        const set = new Set(orderedFiltered);
-        const tail = raw.filter((id) => !set.has(id));
-        return [...orderedFiltered, ...tail];
-    }
 
-    function applyReorder(parentId: NodeId, overId: NodeId, pos: "before" | "after") {
+    function applyReorderAt(parentId: NodeId, insertIndex: number) {
         if (!onReorderChildren) return;
 
         const ctx = dragRef.current;
@@ -546,27 +494,111 @@ export default function OrbatBoard({
 
         if (!ctx) return;
         if (ctx.parentId !== parentId) return;
-        if (!dragging) return;
 
-        const sibs = siblingsOf(parentId, dragging.level);
-        const from = sibs.indexOf(ctx.draggedId);
-        const overIndex = sibs.indexOf(overId);
-        if (from === -1 || overIndex === -1) return;
+        const nextAll = reorderWithinLevelComplete(parentId, ctx.level, ctx.draggedId, insertIndex);
+        if (!nextAll) return;
 
-        const to = pos === "after" ? overIndex + 1 : overIndex;
-        if (to === from) return;
-
-        const next = arrayInsertMove(sibs, from, to);
-        onReorderChildren(parentId, next);
+        onReorderChildren(parentId, nextAll);
     }
+
+    function reorderWithinLevelComplete(
+        parentId: NodeId,
+        level: OrbatNode["level"],
+        draggedId: NodeId,
+        dropIndex: number
+    ): NodeId[] | null {
+        const rawAll = childrenMap.get(parentId) ?? [];
+        const all = stableOrder(parentId, rawAll, childrenOrder);
+
+        const sibs = all.filter((cid) => nodesById.get(cid)?.level === level);
+
+        const from = sibs.indexOf(draggedId);
+        if (from === -1) return null;
+
+        const to = Math.max(0, Math.min(dropIndex, sibs.length));
+        if (to === from) return null;
+
+        const moved = arrayInsertMove(sibs, from, to);
+
+        let k = 0;
+        const nextAll = all.map((cid) => {
+            const nn = nodesById.get(cid);
+            if (nn?.level !== level) return cid;
+            return moved[k++];
+        });
+
+        return nextAll;
+    }
+
 
     const contentStyle: React.CSSProperties =
         scaleMode === "visual"
             ? { transform: `scale(${scale})`, width: w, height: h }
             : { transform: `scale(${scale})`, width: w / scale, height: h / scale };
 
+    const overlayW = scaleMode === "visual" ? w : w / scale;
+    const overlayH = scaleMode === "visual" ? h : h / scale;
+
+    const dragSiblings = React.useMemo(() => {
+        if (!dragging) return null;
+
+        const sibIds = siblingsOf(dragging.parentId, dragging.level);
+
+        const sibSlots = sibIds
+            .map((id) => slotById.get(id))
+            .filter((s): s is Slot => Boolean(s));
+
+        sibSlots.sort((a, b) => (dragging.level === "SUB" ? a.y - b.y : a.x - b.x));
+
+        return { parentId: dragging.parentId, level: dragging.level, sibSlots };
+    }, [dragging, slotById, siblingsOf]);
+
+    type DropGap = { index: number; x: number; y: number; w: number; h: number };
+
+    const dropGaps = React.useMemo<DropGap[]>(() => {
+        if (!dragSiblings) return [];
+        const { level, sibSlots } = dragSiblings;
+        if (sibSlots.length === 0) return [];
+
+        const gaps: DropGap[] = [];
+
+        const GAP_W = Math.max(12, Math.round(style.colGap * 0.6));
+        const GAP_H = Math.max(12, Math.round(style.subGap * 0.6));
+
+        if (level === "SUB") {
+            const first = sibSlots[0];
+            gaps.push({ index: 0, x: first.x, y: first.y - GAP_H, w: first.w, h: GAP_H });
+
+            for (let i = 0; i < sibSlots.length - 1; i++) {
+                const a = sibSlots[i];
+                const b = sibSlots[i + 1];
+                const y = a.y + a.h;
+                const h2 = Math.max(GAP_H, b.y - y);
+                gaps.push({ index: i + 1, x: a.x, y, w: a.w, h: h2 });
+            }
+
+            const last = sibSlots[sibSlots.length - 1];
+            gaps.push({ index: sibSlots.length, x: last.x, y: last.y + last.h, w: last.w, h: GAP_H });
+        } else {
+            const first = sibSlots[0];
+            gaps.push({ index: 0, x: first.x - GAP_W, y: first.y, w: GAP_W, h: first.h });
+
+            for (let i = 0; i < sibSlots.length - 1; i++) {
+                const a = sibSlots[i];
+                const b = sibSlots[i + 1];
+                const x = a.x + a.w;
+                const w2 = Math.max(GAP_W, b.x - x);
+                gaps.push({ index: i + 1, x, y: a.y, w: w2, h: a.h });
+            }
+
+            const last = sibSlots[sibSlots.length - 1];
+            gaps.push({ index: sibSlots.length, x: last.x + last.w, y: last.y, w: GAP_W, h: last.h });
+        }
+
+        return gaps;
+    }, [dragSiblings, style]);
+
     const linkStrokeWidth = 4;
-    const linkPad = exportMode ? 0 : Math.ceil(linkStrokeWidth * 2);
 
     return (
         <div
@@ -578,13 +610,70 @@ export default function OrbatBoard({
         >
             <div className={exportMode ? "" : "h-full w-full overflow-auto p-3"}>
                 <div ref={contentRef} className="origin-top-left" style={contentStyle}>
-                    <LinksLayer
-                        slots={slots}
-                        edges={edges}
-                        stroke={stroke ?? "#000"}
-                        strokeWidth={linkStrokeWidth}
-                        pad={linkPad}
-                    />
+                    <LinksLayer slots={slots} edges={edges} stroke={stroke ?? "#000"} strokeWidth={linkStrokeWidth} />
+
+                    {/* Drop gaps overlay */}
+                    {dragSiblings && dropGaps.length > 0 ? (
+                        <div className="absolute left-0 top-0" style={{ width: overlayW, height: overlayH }}>
+                            {dropGaps.map((g) => {
+                                const active =
+                                    !!dropHint &&
+                                    dropHint.parentId === dragSiblings.parentId &&
+                                    dropHint.level === dragSiblings.level &&
+                                    dropHint.index === g.index;
+
+                                return (
+                                    <div
+                                        key={g.index}
+                                        className="absolute z-40 pointer-events-auto"
+                                        style={{ left: g.x, top: g.y, width: g.w, height: g.h }}
+                                        onDragOver={(e) => {
+                                            e.preventDefault();
+                                            setDropHint({
+                                                parentId: dragSiblings.parentId,
+                                                level: dragSiblings.level,
+                                                index: g.index,
+                                            });
+                                        }}
+                                        onDragLeave={(e) => {
+                                            const rel = e.relatedTarget as Node | null;
+                                            if (rel && (e.currentTarget as HTMLElement).contains(rel)) return;
+                                            if (active) clearHints();
+                                        }}
+                                        onDrop={(e) => {
+                                            e.preventDefault();
+                                            const idx = g.index;
+                                            clearHints();
+                                            applyReorderAt(dragSiblings.parentId, idx);
+                                        }}
+                                    >
+                                        {active ? (
+                                            <div
+                                                className="pointer-events-none absolute bg-black/60 rounded"
+                                                style={
+                                                    dragSiblings.level === "SUB"
+                                                        ? {
+                                                            left: 0,
+                                                            right: 0,
+                                                            top: "50%",
+                                                            height: 2,
+                                                            transform: "translateY(-50%)",
+                                                        }
+                                                        : {
+                                                            top: 0,
+                                                            bottom: 0,
+                                                            left: "50%",
+                                                            width: 2,
+                                                            transform: "translateX(-50%)",
+                                                        }
+                                                }
+                                            />
+                                        ) : null}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : null}
 
                     {safeNodes.map((node) => {
                         if (node.id === ROOT_ID) return null;
@@ -595,16 +684,15 @@ export default function OrbatBoard({
                         const isSelected = selectedId === node.id;
                         const parentId = parentById[node.id] ?? null;
 
-                        const hint = dropHint?.id === node.id ? dropHint.pos : null;
-
                         const isKindOpen = kindEditor?.id === node.id;
                         const canDnD = Boolean(onReorderChildren) && parentId != null && !isKindOpen;
 
+                        // Optionnel : mute les autres nodes pendant drag (pas nécessaire au fonctionnement)
                         const level = node.level;
 
                         const acceptDrop =
-                            canDnD &&
                             dragging != null &&
+                            parentId != null &&
                             dragging.parentId === parentId &&
                             dragging.level === level;
 
@@ -625,54 +713,17 @@ export default function OrbatBoard({
                                     height: slot.h,
                                 }}
                                 draggable={canDnD}
-                                onDragStart={() => {
+                                onDragStart={(e) => {
                                     if (!canDnD || !parentId) return;
-                                    dragRef.current = { parentId, draggedId: node.id };
+                                    e.dataTransfer?.setData("text/plain", node.id);
+                                    e.dataTransfer?.setDragImage?.(e.currentTarget, 10, 10);
+                                    dragRef.current = { parentId, draggedId: node.id, level: node.level };
                                     setDragging({ parentId, draggedId: node.id, level: node.level });
                                 }}
                                 onDragEnd={() => {
                                     dragRef.current = null;
                                     setDragging(null);
                                     clearHints();
-                                }}
-                                onDragOver={(e) => {
-                                    if (!acceptDrop || !parentId) return;
-                                    e.preventDefault();
-
-                                    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-
-                                    //  IMPORTANT: axe selon la direction visuelle
-                                    // LEAD/UNIT: rangée horizontale => X
-                                    // SUB: pile verticale => Y
-                                    const pos: "before" | "after" =
-                                        node.level === "SUB"
-                                            ? e.clientY - rect.top > rect.height / 2
-                                                ? "after"
-                                                : "before"
-                                            : e.clientX - rect.left > rect.width / 2
-                                                ? "after"
-                                                : "before";
-
-                                    hoverRef.current = { overId: node.id, pos };
-                                    setDropHint({ id: node.id, pos });
-                                }}
-                                onDragLeave={(e) => {
-                                    if (!canDnD) return;
-                                    const rel = e.relatedTarget as Node | null;
-                                    if (rel && e.currentTarget.contains(rel)) return;
-                                    if (dropHint?.id === node.id) clearHints();
-                                }}
-                                onDrop={(e) => {
-                                    if (!acceptDrop || !parentId) return;
-                                    e.preventDefault();
-
-                                    const pos =
-                                        hoverRef.current?.overId === node.id ? hoverRef.current.pos : null;
-
-                                    clearHints();
-                                    if (!pos) return;
-
-                                    applyReorder(parentId, node.id, pos);
                                 }}
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -694,20 +745,7 @@ export default function OrbatBoard({
                                     }
                                 }}
                             >
-                                {hint === "before" ? (
-                                    <div className="pointer-events-none absolute left-0 right-0 top-0 h-[2px] rounded bg-black/60" />
-                                ) : null}
-                                {hint === "after" ? (
-                                    <div className="pointer-events-none absolute left-0 right-0 bottom-0 h-[2px] rounded bg-black/60" />
-                                ) : null}
-
-                                <OrbatSVG
-                                    kind={node.kind}
-                                    bg={bg}
-                                    stroke={stroke}
-                                    shape={shape}
-                                    className="block h-full w-full"
-                                />
+                                <OrbatSVG kind={node.kind} bg={bg} stroke={stroke} shape={shape} className="block h-full w-full" />
 
                                 {node.labelMain ? (
                                     <div
@@ -768,18 +806,14 @@ export default function OrbatBoard({
                                                 setKindEditor(null);
                                             }}
                                         >
-                                            {(Object.entries(UNIT_KIND_LABEL) as [UnitKind, string][]).map(
-                                                ([k, label]) => (
-                                                    <option key={k} value={k}>
-                                                        {label}
-                                                    </option>
-                                                )
-                                            )}
+                                            {(Object.entries(UNIT_KIND_LABEL) as [UnitKind, string][]).map(([k, label]) => (
+                                                <option key={k} value={k}>
+                                                    {label}
+                                                </option>
+                                            ))}
                                         </select>
 
-                                        <div className="mt-2 text-[11px] opacity-70">
-                                            Esc ou clic dehors pour fermer.
-                                        </div>
+                                        <div className="mt-2 text-[11px] opacity-70">Esc ou clic dehors pour fermer.</div>
                                     </div>
                                 ) : null}
                             </div>

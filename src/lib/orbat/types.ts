@@ -58,7 +58,7 @@ export type NodeId = string;
 /**
  *  Tree levels
  */
-export type NodeLevel = "LEAD" | "UNIT" | "SUB";
+export type NodeLevel = "ROOT" | "LEAD" | "UNIT" | "SUB";
 
 /**
  * Orbat main element
@@ -77,6 +77,7 @@ export type OrbatNode = {
  * Permet de regrouper les Lead top-level et de les ordonner.
  */
 export const ROOT_ID = "ROOT" as const;
+
 /**
  * List children order by parent
  * childrenOrder["ROOT"] = ["L2","L1"]   // order of LEADs
